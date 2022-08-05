@@ -1,16 +1,12 @@
-import numpy as np
 import pandas as pd
-import requests as rq
 import re
 import time
 import pickle as pkl
-from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
-from sqlalchemy import create_engine
 
 
 run_script = False
@@ -28,7 +24,9 @@ def scrape_listings(path_to_chrome_driver, num_pages, delay_seconds_between_gets
     #check to see if there are any listings
     total_urls = []
     urls = ["https://carsandbids.com/past-auctions/"]
-    urls_2 = [f"https://carsandbids.com/past-auctions/?page={i}" for i in range(2,num_pages)]
+    urls_2 = []
+    if not num_pages:
+        urls_2 = [f"https://carsandbids.com/past-auctions/?page={i}" for i in range(2,num_pages)]
     urls = urls + urls_2
     options = webdriver.ChromeOptions()
     options.add_argument('headless')
@@ -62,10 +60,12 @@ def scrape_text_from_listing(url, path_to_chrome_driver):
     html_text_selling_price_details = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, "/html/body/div/div[2]/div[3]/div[1]/div/div"))).get_attribute("innerHTML")
     html_text_dougs_notes = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, "/html/body/div/div[2]/div[5]/div[1]/div[3]/div[1]/div"))).get_attribute("innerHTML")
     html_text_model_year_details = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, "/html/body/div/div[2]/div[1]/div/div[1]"))).get_attribute("innerHTML")
-    return html_text_car_details, html_text_selling_price_details, html_text_dougs_notes, html_text_model_year_details
+    html_text_auction_date_details = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, "/html/body/div/div[2]/div[5]/div[1]/div[6]/div/ul/li[2]/div[2]"))).get_attribute("innerHTML")
+
+    return html_text_car_details, html_text_selling_price_details, html_text_dougs_notes, html_text_model_year_details, html_text_auction_date_details, url
 
 
-def pull_data_from_listing_text(text_car_details, text_selling_price, text_dougs_notes, text_model_year):
+def pull_data_from_listing_text(text_car_details, text_selling_price, text_dougs_notes, text_model_year, text_auction_date, url):
 
     def clean_make(text_car_details):
         result = re.search('Make(.*?)</dd><dt>', text_car_details).group(1)
@@ -80,15 +80,25 @@ def pull_data_from_listing_text(text_car_details, text_selling_price, text_dougs
         return result
     def clean_all_but_make_model_location(text_car_details, keyword):
         result = re.search(f'{keyword}(.*?)</dd><dt>', text_car_details).group(1)
+        if keyword == "Mileage":
+            r = re.compile("([0-9]+[,.]?[0-9]+)")
+            result = re.search(r, result)
+            result = result.group(0)
+            if "," in result:
+                result = result.replace(",", "")
+                return result
         result = result[::-1]
         result = result.split(">")[0]
         result = result[::-1]
+        if keyword == "Title Status":
+            result = re.sub(r'\([^)]*\)', '', result)
         return result
+
     def clean_location(text_car_details):
-        reg = re.compile('^.*(?P<zipcode>\d{5}).*$')
-        match = reg.match(text_car_details)
-        match = match.groupdict()
-        return match["zipcode"]
+        reg = re.compile("\d{5}")
+        match = re.search(reg, text_car_details)
+        match = match.group(0)
+        return match
 
     def get_sold_price(text_selling_price):
         price = re.search('Sold(.*?)</span></span>', text_selling_price)
@@ -115,6 +125,18 @@ def pull_data_from_listing_text(text_car_details, text_selling_price, text_dougs
     def get_model_year(text_model_year):
         year = re.search(r'[0-9]{4}', text_model_year).group(0)
         return year
+    
+    def get_auction_date(text_auction_date):
+        txt = text_auction_date.split(" ")
+        monthDict = {"Jan":1, 'Feb':2, 'Mar':3, 'Apr':4, 'May':5, 'Jun':6, 
+            'Jul':7, 'Aug':8, 'Sep':9, 'Oct':10, 'Nov':11, 'Dec':12}
+        month = monthDict[txt[0]]
+        r = re.compile("[0-9]{1,2}")
+        num = re.search(r, txt[1]).group(0)
+        year = str(txt[2])
+        date = str(month) + "-" + str(num) + "-" + year
+        return date
+
 
     keywords = ["Make", "Model", "Mileage", "VIN","Title Status", "Location",
                 "Engine", "Drivetrain", "Transmission", "Body Style", 
@@ -159,6 +181,14 @@ def pull_data_from_listing_text(text_car_details, text_selling_price, text_dougs
         output_dict["Year"] = get_model_year(text_model_year)
     except:
         output_dict["Year"] = None
+    try:
+        output_dict["Date"] = get_auction_date(text_auction_date)
+    except:
+        output_dict["Date"] = None
+    try:
+        output_dict["URL"] = str(url)
+    except:
+        output_dict["URL"] = None
 
 
     return output_dict
@@ -176,8 +206,9 @@ if run_script:
     for url in listings:
         time.sleep(0)
         try:
-            html_text_car_details, html_text_selling_price_details, html_text_dougs_notes, html_text_model_year_details = scrape_text_from_listing(url, "/Users/adamgabriellang/Downloads/chromedriver")
-            text = pull_data_from_listing_text(html_text_car_details, html_text_selling_price_details, html_text_dougs_notes, html_text_model_year_details)
+            html_text_car_details, html_text_selling_price_details, html_text_dougs_notes, html_text_model_year_details, html_text_auction_date_details, url = scrape_text_from_listing(url, "/Users/adamgabriellang/Downloads/chromedriver")
+            text = pull_data_from_listing_text(html_text_car_details, html_text_selling_price_details, html_text_dougs_notes, html_text_model_year_details, html_text_auction_date_details, url)
+            print(text)
             data.append(text)
             print(f"finished iteration {i}")
         except:
@@ -189,13 +220,13 @@ if run_script:
 
 
 
-data = pd.read_csv("listings_data.csv")
-data.rename(columns={"Title Status" : "TitleStatus",
-             "Body Style": "BodyStyle",
-             "Exterior Color": "ExteriorColor",
-             "Interior Color": "InteriorColor",
-             "Sold Type": "SoldType",
-             "Num Bids": "NumBids"}, inplace=True)
 
-data.drop(columns= "Unnamed: 0", inplace=True)
-data.to_csv("listings_data_new.csv", index=False)
+
+options = webdriver.ChromeOptions()
+options.add_argument('headless')
+s = Service("/Users/adamgabriellang/Downloads/chromedriver")
+driver = webdriver.Chrome(service=s, options=options)
+driver.get("https://carsandbids.com/past-auctions/?page=179")
+html_text_car_details = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, "/html/body/div/div[2]/div[2]/div/ul[1]"))).get_attribute("innerHTML")
+print(html_text_car_details)
+print(re.search("auction-item ", html_text_car_details))
