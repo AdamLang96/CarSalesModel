@@ -22,3 +22,26 @@ def getVinInfo(API_KEY = 'VA_DEMO_KEY', VIN = 'WDBUF65J64A534963', NUM_DAYS = 90
 
 uri = "postgresql://codesmith:TensorFlow01?@cardata.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com:5432/postgres"
 engine = create_engine(uri)
+
+table_df = pd.read_sql_table(
+    "CarsBidData",
+    con=engine
+)
+
+# print(table_df.info())
+
+# print(table_df.head())
+
+# vins = table_df["VIN"]
+# miles = table_df["Mileage"]
+
+# cardata1 = pd.concat([vins, miles], axis = 1)
+
+cardata2 = table_df[["VIN", "Mileage"]]
+
+# print(cardata1.head())
+print(cardata2.head())
+
+for index, row in cardata2.iterrows():
+  print(row["VIN"])
+  print(row["Mileage"])
