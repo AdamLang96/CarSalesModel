@@ -1,7 +1,11 @@
 import numpy as np
 import pandas as pd
 import requests as rq
-import sqlalchemy as sa
+from sqlalchemy import create_engine
+from sqlalchemy import Column, Integer, String, VARCHAR, Numeric
+from sqlalchemy import Table
+from sqlalchemy.ext.declarative import declarative_base
+import pandas as pd
 from bs4 import BeautifulSoup
 
 def getVinInfo(API_KEY = 'VA_DEMO_KEY', VIN = 'WDBUF65J64A534963', NUM_DAYS = 90, MILEAGE = 30000):
@@ -16,3 +20,5 @@ def getVinInfo(API_KEY = 'VA_DEMO_KEY', VIN = 'WDBUF65J64A534963', NUM_DAYS = 90
 
   return data
 
+uri = "postgresql://codesmith:TensorFlow01?@cardata.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com:5432/postgres"
+engine = create_engine(uri)
