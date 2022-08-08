@@ -3,6 +3,7 @@ from sqlalchemy import Column, Integer, String, VARCHAR, Numeric
 from sqlalchemy import Table
 from sqlalchemy.ext.declarative import declarative_base
 import pandas as pd
+import re
 
 uri = "postgresql://codesmith:TensorFlow01?@cardata.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com:5432/postgres"
 engine = create_engine(uri)
@@ -30,5 +31,8 @@ class CarsBidsData(Base):
     Year=               Column(Numeric)
 
 # Base.metadata.create_all(engine)
+
+data = pd.read_csv("listings_data_8_8.csv")
+data.to_sql(name="CarsBidData", con=engine, if_exists="replace")
 
 
