@@ -9,7 +9,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 
 
-run_script = False
+run_script = True
 
 
 with open("color_dict.pkl", 'rb') as f:
@@ -25,7 +25,7 @@ def scrape_listings(path_to_chrome_driver, num_pages, delay_seconds_between_gets
     total_urls = []
     urls = ["https://carsandbids.com/past-auctions/"]
     urls_2 = []
-    if not num_pages:
+    if num_pages:
         urls_2 = [f"https://carsandbids.com/past-auctions/?page={i}" for i in range(2,num_pages)]
     urls = urls + urls_2
     options = webdriver.ChromeOptions()
@@ -34,7 +34,6 @@ def scrape_listings(path_to_chrome_driver, num_pages, delay_seconds_between_gets
     driver = webdriver.Chrome(service=s, options=options)
     i=0
     for url in urls:
-        print(f"listing page: {i} ")
         i+=1
         time.sleep(delay_seconds_between_gets)
         driver.get(url)
@@ -200,7 +199,8 @@ def pull_data_from_listing_text(text_car_details, text_selling_price, text_dougs
 
 if run_script:
     data = []
-    listings = scrape_listings("/Users/adamgabriellang/Downloads/chromedriver", 167, 0)
+    listings = scrape_listings("/Users/adamgabriellang/Downloads/chromedriver", 168, 0)
+    print(len(listings))
     i = 1
     j = 1
     for url in listings:
@@ -208,7 +208,6 @@ if run_script:
         try:
             html_text_car_details, html_text_selling_price_details, html_text_dougs_notes, html_text_model_year_details, html_text_auction_date_details, url = scrape_text_from_listing(url, "/Users/adamgabriellang/Downloads/chromedriver")
             text = pull_data_from_listing_text(html_text_car_details, html_text_selling_price_details, html_text_dougs_notes, html_text_model_year_details, html_text_auction_date_details, url)
-            print(text)
             data.append(text)
             print(f"finished iteration {i}")
         except:
@@ -216,17 +215,17 @@ if run_script:
             j+=1
         i += 1 
     data = pd.DataFrame(data)
-    data.to_csv("listings_data.csv")
+    data.to_csv("listings_data_8_8.csv")
 
 
 
 
 
-options = webdriver.ChromeOptions()
-options.add_argument('headless')
-s = Service("/Users/adamgabriellang/Downloads/chromedriver")
-driver = webdriver.Chrome(service=s, options=options)
-driver.get("https://carsandbids.com/past-auctions/?page=179")
-html_text_car_details = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, "/html/body/div/div[2]/div[2]/div/ul[1]"))).get_attribute("innerHTML")
-print(html_text_car_details)
-print(re.search("auction-item ", html_text_car_details))
+# options = webdriver.ChromeOptions()
+# options.add_argument('headless')
+# s = Service("/Users/adamgabriellang/Downloads/chromedriver")
+# driver = webdriver.Chrome(service=s, options=options)
+# driver.get("https://carsandbids.com/past-auctions/?page=179")
+# html_text_car_details = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, "/html/body/div/div[2]/div[2]/div/ul[1]"))).get_attribute("innerHTML")
+# print(html_text_car_details)
+# print(re.search("auction-item ", html_text_car_details))
