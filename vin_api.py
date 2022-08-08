@@ -8,7 +8,7 @@ from sqlalchemy.ext.declarative import declarative_base
 import pandas as pd
 from bs4 import BeautifulSoup
 
-def getVinInfo(API_KEY = 'VA_DEMO_KEY', VIN = 'WDBUF65J64A534963', NUM_DAYS = 90, MILEAGE = 30000):
+def getVinInfo(API_KEY = 'VA_DEMO_KEY', VIN = 'WDBUF65J64A534963', NUM_DAYS = 90, MILEAGE = 'average'):
   # 'average' if none specified
   URL = f'https://marketvalue.vinaudit.com/getmarketvalue.php?key={API_KEY}&vin={VIN}&format=json&period={NUM_DAYS}&mileage={MILEAGE}'
   # print(URL)
@@ -42,6 +42,12 @@ cardata2 = table_df[["VIN", "Mileage"]]
 # print(cardata1.head())
 print(cardata2.head())
 
+responses = []
 for index, row in cardata2.iterrows():
-  print(row["VIN"])
-  print(row["Mileage"])
+  print(index)
+  thisVin = row["VIN"]
+  print(thisVin)
+  apiResponse = getVinInfo(VIN=thisVin)
+  print(apiResponse)
+  responses.append(apiResponse)
+  
