@@ -4,6 +4,7 @@ from sqlalchemy import Table
 from sqlalchemy.ext.declarative import declarative_base
 import pandas as pd
 import re
+
 uri = "postgresql://codesmith:TensorFlow01?@cardata.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com:5432/postgres"
 engine = create_engine(uri)
 Base = declarative_base()
@@ -31,16 +32,7 @@ class CarsBidsData(Base):
 
 # Base.metadata.create_all(engine)
 
+data = pd.read_csv("listings_data_8_8.csv")
+data.to_sql(name="CarsBidData", con=engine, if_exists="replace")
 
-# table_df = pd.read_sql_table("CarsBidData", con=engine)
-# print(table_df.head(20)[""])
-
-
-trystring = re.sub(r'\([^)]*\)', '', "Clean")
-print(trystring)
-
-# string= "<a target=_blank rel=noopener noreferrer>Boulder, CO 80302 </a>"
-# r = re.compile("\d{5}")
-# test = re.search(r, string)
-# print(test.group(0))
 
