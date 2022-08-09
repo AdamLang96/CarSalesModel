@@ -43,7 +43,6 @@ prelim_data = full_data[["Make", "Mileage", "Year", "Price", "Sold Type", "Num B
 ohe = OneHotEncoder()
 label_encoder = LabelEncoder()
 
-
 make_column_encoder = ohe.fit_transform(prelim_data[['Make']])
 sold_type_column_encoder = ohe.fit_transform(prelim_data[['Sold Type']])
 reserve_column_encoder = ohe.fit_transform(prelim_data[['Y_N_Reserve']])
@@ -54,10 +53,12 @@ days_arr = np.array(prelim_data['Num_Days'])
 price_arr = np.array(prelim_data['Price'])
 
 
-normalized_mileage = preprocessing.normalize([mileage_arr])
-normalized_bids = preprocessing.normalize([num_bids_arr])
-normalized_days = preprocessing.normalize([days_arr])
-normalized_price = preprocessing.normalize([price_arr])
+
+
+normalized_mileage = preprocessing.scale([mileage_arr])
+normalized_bids = preprocessing.scale([num_bids_arr])
+normalized_days = preprocessing.scale([days_arr])
+normalized_price = preprocessing.scale([price_arr])
 
 
 # print(make_column_encoder.toarray())
