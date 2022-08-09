@@ -1,10 +1,7 @@
-from itertools import filterfalse
-from lzma import PRESET_DEFAULT
-from tkinter import Label
 from sqlalchemy import create_engine
 import pandas as pd
 import numpy as np
-import sklearn
+import sklearn as sk
 from sklearn.pipeline import make_pipeline
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.preprocessing import OneHotEncoder
