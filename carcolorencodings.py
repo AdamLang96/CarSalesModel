@@ -1,4 +1,3 @@
- 
 import pickle as pkl
 
 all_encodings = [
@@ -966,8 +965,8 @@ all_encodings = [
 
 colordict = {}
 for i in range(len(all_encodings)):
-    colordict[all_encodings[i]["Description"]] = [all_encodings[i]["RGB"]]
+   colordict[all_encodings[i]["Description"]] = [all_encodings[i]["RGB"]]
 
 print(colordict)
 with open("color_dict.pkl", "wb") as f:
-    pkl.dump(colordict, f)
+   pkl.dump(colordict, f)
