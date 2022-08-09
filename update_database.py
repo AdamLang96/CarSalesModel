@@ -1,6 +1,6 @@
 
 from datetime import date, datetime
-from msilib.schema import Error
+import warnings
 import re
 import time
 from carsandbids_scrape import scrape_listings, scrape_text_from_listing, pull_data_from_listing_text
@@ -38,7 +38,7 @@ try:
     first_page_listings = scrape_listings("/Users/adamgabriellang/Downloads/chromedriver", 0, 0)
     new_listings = list(set(first_page_listings) - set(urls))
 except:
-    raise Error("Failed to access CarsandBids.com")
+    raise ValueError("Failed to access CarsandBids.com")
 
 with engine.connect() as connection:
     while len(new_listings):
@@ -52,12 +52,12 @@ with engine.connect() as connection:
                 mileage = cb_row["Mileage"]
                 sale_date = cb_row["Date"]
             except:
-                raise Warning(f"Unable to pull data from listing {i}")
+                warnings.warn(f"Unable to pull data from listing {i}")
             
             try:
                 vin_audit_data = process_vin_audit_data(VIN = vin, Mileage= mileage, Date= sale_date)
             except:
-                raise Warning(f"Unable to pull data from VinAudit API for VIN {vin}")
+                warnings.warn(f"Unable to pull data from VinAudit API for VIN {vin}")
             
             car_bids_sql_stmt = text('''INSERT INTO "CarsBidData"
                                         VALUES (:v0, :v01, :v1, :v2, :v3, :v4,
@@ -75,7 +75,7 @@ with engine.connect() as connection:
                                     v16=cb_row["Y_N_Reserve"], v17=cb_row["Year"],
                                     v18=cb_row["Date"], v19=cb_row["URL"])
             except:
-                raise Warning(f"Unable add data to CarsBidTable")
+                warnings.warn("Unable add data to CarsBidTable")
             
             vin_audit_sql_stmt = text('''INSERT INTO "VinAuditData"
                                 VALUES (:v0, :v1, :v2, :v3, :v4, :v5)''')
@@ -85,14 +85,14 @@ with engine.connect() as connection:
                                     v0=idx_VA, v1= vin_audit_data["VIN"], v2=vin_audit_data["Market_Value_Mean"], v3=vin_audit_data["Market_Value_Std"], v4=vin_audit_data["Count"],
                                     v5=round(vin_audit_data["Count_Over_Days"], 3))
             except:
-                raise Warning(f"Unable add data to VinAuditData table")
+                warnings.warn("Unable add data to VinAuditData")
         
         try:
             first_page_listings = scrape_listings("/Users/adamgabriellang/Downloads/chromedriver", j, 0)
             new_listings = list(set(first_page_listings) - set(urls))
             j += 1
         except:
-            raise Error("Failed to access CarsandBids.com")
+            raise ValueError("Failed to access CarsandBids.com")
             
 
 
