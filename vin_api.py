@@ -1,7 +1,11 @@
 import requests as rq
 from datetime import date, datetime
 
-def getVinInfo(VIN, API_KEY = 'VA_DEMO_KEY', NUM_DAYS = 90, MILEAGE = 30000):
+run_script = False
+run_script_2 = False
+
+def getVinInfo(VIN, API_KEY = 'VA_DEMO_KEY', NUM_DAYS = 90, MILEAGE = 'average'):
+  # 'average' if none specified
   URL = f'https://marketvalue.vinaudit.com/getmarketvalue.php?key={API_KEY}&vin={VIN}&format=json&period={NUM_DAYS}&mileage={MILEAGE}'
   r = rq.get(url = URL)
   data = r.json()
@@ -48,3 +52,13 @@ def process_vin_audit_data(VIN, Mileage, Date):
 
 
 
+
+# responses = []
+# for index, row in cardata2.iterrows():
+#   print(index)
+#   thisVin = row["VIN"]
+#   print(thisVin)
+#   apiResponse = getVinInfo(VIN=thisVin)
+#   print(apiResponse)
+#   responses.append(apiResponse)
+  
