@@ -1,6 +1,5 @@
 from sqlalchemy import create_engine
 import pandas as pd
-import sklearn
 from sklearn.pipeline import make_pipeline
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.model_selection import train_test_split
