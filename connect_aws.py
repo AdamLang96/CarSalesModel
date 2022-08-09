@@ -32,7 +32,9 @@ class CarsBidsData(Base):
 
 # Base.metadata.create_all(engine)
 
-data = pd.read_csv("listings_data_8_8.csv")
-data.to_sql(name="CarsBidData", con=engine, if_exists="replace")
+
+# data_cb = pd.read_csv("listings_data_8_8.csv")
+# data_vin = pd.read_csv("full_vin_audit_data.csv")
+
 
 

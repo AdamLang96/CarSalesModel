@@ -1,7 +1,5 @@
-import pandas as pd
 import re
 import time
-import pickle as pkl
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -9,44 +7,27 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 
 
-run_script = True
-
-
-with open("color_dict.pkl", 'rb') as f:
-    color_dict = pkl.load(f)
-
-color_dict = {k.lower(): v for k, v in color_dict.items()}
-
-
 #"/Users/adamgabriellang/Downloads/chromedriver"
 
-def scrape_listings(path_to_chrome_driver, num_pages, delay_seconds_between_gets):
-    #check to see if there are any listings
-    total_urls = []
-    urls = ["https://carsandbids.com/past-auctions/"]
-    urls_2 = []
-    if num_pages:
-        urls_2 = [f"https://carsandbids.com/past-auctions/?page={i}" for i in range(2,num_pages)]
-    urls = urls + urls_2
+def scrape_listings(path_to_chrome_driver, page_number, delay_seconds_between_gets):
+    if page_number == 0:
+        url = "https://carsandbids.com/past-auctions/"
+    else:
+        url = f"https://carsandbids.com/past-auctions/?page={page_number}"
     options = webdriver.ChromeOptions()
     options.add_argument('headless')
     s = Service(path_to_chrome_driver)
     driver = webdriver.Chrome(service=s, options=options)
-    i=0
-    for url in urls:
-        i+=1
-        time.sleep(delay_seconds_between_gets)
-        driver.get(url)
-        html_text = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, "/html/body/div/div[2]/div[2]/div/ul[1]"))).get_attribute("innerHTML")
-        html_text = html_text.split(" ")
-        href_match = re.compile(".*href=")
-        cleaned_urls_list = list(filter(href_match.match, html_text)) # Read Note below
-        cleaned_urls_list = ''.join(cleaned_urls_list)
-        cleaned_urls_list = re.findall(r'"([^"]*)"', cleaned_urls_list)
-        cleaned_urls_list = ["https://carsandbids.com" + s for s in cleaned_urls_list]
-        total_urls = total_urls + cleaned_urls_list
-    total_urls = list(set(total_urls))
-    return total_urls
+    time.sleep(delay_seconds_between_gets)
+    driver.get(url)
+    html_text = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, "/html/body/div/div[2]/div[2]/div/ul[1]"))).get_attribute("innerHTML")
+    html_text = html_text.split(" ")
+    href_match = re.compile(".*href=")
+    cleaned_urls_list = list(filter(href_match.match, html_text)) # Read Note below
+    cleaned_urls_list = ''.join(cleaned_urls_list)
+    cleaned_urls_list = re.findall(r'"([^"]*)"', cleaned_urls_list)
+    cleaned_urls_list = ["https://carsandbids.com" + s for s in cleaned_urls_list]
+    return cleaned_urls_list
 
 
 def scrape_text_from_listing(url, path_to_chrome_driver):
@@ -61,7 +42,7 @@ def scrape_text_from_listing(url, path_to_chrome_driver):
     html_text_model_year_details = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, "/html/body/div/div[2]/div[1]/div/div[1]"))).get_attribute("innerHTML")
     html_text_auction_date_details = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, "/html/body/div/div[2]/div[5]/div[1]/div[6]/div/ul/li[2]/div[2]"))).get_attribute("innerHTML")
 
-    return html_text_car_details, html_text_selling_price_details, html_text_dougs_notes, html_text_model_year_details, html_text_auction_date_details, url
+    return html_text_car_details, html_text_selling_price_details, html_text_dougs_notes, html_text_model_year_details, html_text_auction_date_details
 
 
 def pull_data_from_listing_text(text_car_details, text_selling_price, text_dougs_notes, text_model_year, text_auction_date, url):
@@ -196,36 +177,3 @@ def pull_data_from_listing_text(text_car_details, text_selling_price, text_dougs
 
 
 
-
-if run_script:
-    data = []
-    listings = scrape_listings("/Users/adamgabriellang/Downloads/chromedriver", 168, 0)
-    print(len(listings))
-    i = 1
-    j = 1
-    for url in listings:
-        time.sleep(0)
-        try:
-            html_text_car_details, html_text_selling_price_details, html_text_dougs_notes, html_text_model_year_details, html_text_auction_date_details, url = scrape_text_from_listing(url, "/Users/adamgabriellang/Downloads/chromedriver")
-            text = pull_data_from_listing_text(html_text_car_details, html_text_selling_price_details, html_text_dougs_notes, html_text_model_year_details, html_text_auction_date_details, url)
-            data.append(text)
-            print(f"finished iteration {i}")
-        except:
-            print(f"failed to make request for {j}th time")
-            j+=1
-        i += 1 
-    data = pd.DataFrame(data)
-    data.to_csv("listings_data_8_8.csv")
-
-
-
-
-
-# options = webdriver.ChromeOptions()
-# options.add_argument('headless')
-# s = Service("/Users/adamgabriellang/Downloads/chromedriver")
-# driver = webdriver.Chrome(service=s, options=options)
-# driver.get("https://carsandbids.com/past-auctions/?page=179")
-# html_text_car_details = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, "/html/body/div/div[2]/div[2]/div/ul[1]"))).get_attribute("innerHTML")
-# print(html_text_car_details)
-# print(re.search("auction-item ", html_text_car_details))
