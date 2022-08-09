@@ -29,7 +29,6 @@ def scrape_listings(path_to_chrome_driver, page_number, delay_seconds_between_ge
     cleaned_urls_list = ["https://carsandbids.com" + s for s in cleaned_urls_list]
     return cleaned_urls_list
 
-
 def scrape_text_from_listing(url, path_to_chrome_driver):
     options = webdriver.ChromeOptions()
     options.add_argument('headless')
@@ -44,80 +43,88 @@ def scrape_text_from_listing(url, path_to_chrome_driver):
 
     return html_text_car_details, html_text_selling_price_details, html_text_dougs_notes, html_text_model_year_details, html_text_auction_date_details
 
+def clean_make(text_car_details):
+    result = re.search('Make(.*?)</dd><dt>', text_car_details).group(1)
+    result = re.sub("</a", '', re.search('(?<=">)[^\n]+(?=>[^\n]*$)', result).group(0))
+    return result
+
+def clean_model(text_car_details):
+    result = re.search('Model(.*?)</dd><dt>', text_car_details).group(1)
+    result = re.search("(?<=href).*", result).group(0)
+    result = re.search("(?<=>).*", result).group(0)
+    remove = re.search("(?=><).*", result).group(0)
+    result = re.sub("</a" + remove, '', result)
+    return result
+
+def clean_all_but_make_model_location(text_car_details, keyword):
+    result = re.search(f'{keyword}(.*?)</dd><dt>', text_car_details).group(1)
+    if keyword == "Mileage":
+        r = re.compile("([0-9]+[,.]?[0-9]+)")
+        result = re.search(r, result)
+        result = result.group(0)
+        if "," in result:
+            result = result.replace(",", "")
+            return result
+    result = result[::-1]
+    result = result.split(">")[0]
+    result = result[::-1]
+    if keyword == "Title Status":
+        result = re.sub(r'\([^)]*\)', '', result)
+    return result
+
+def clean_location(text_car_details):
+    reg = re.compile("\d{5}")
+    match = re.search(reg, text_car_details)
+    match = match.group(0)
+    return match
+
+def get_sold_price(text_selling_price):
+    price = re.search('Sold(.*?)</span></span>', text_selling_price)
+    sell_type = "Sold For"
+    if price == None:
+        price = re.search('Bid(.*?)</span></span>', text_selling_price)
+        sell_type = "Bid To"
+    price = price.group(1)
+    price = price.split('>')
+    price = price[len(price)-1]
+    price = ''.join(re.findall("\d+", price))
+    return price, sell_type
+
+def get_num_bids(text_selling_price):
+    bids = re.search('Bids(.*?)</span></li>', text_selling_price).group(1)
+    bids = bids.split('>')
+    bids = bids[len(bids)-1]
+    return bids
+
+def check_reserve(text_dougs_notes):    
+    check = re.search("no reserve", text_dougs_notes)
+    if check:
+        return "No Reserve"
+    else:
+        return "Reserve"
+
+def get_model_year(text_model_year):
+    year = re.search(r'[0-9]{4}', text_model_year).group(0)
+    return year
+
+def get_auction_date(text_auction_date):
+    txt = text_auction_date.split(" ")
+    monthDict = {"Jan":1, 'Feb':2, 'Mar':3, 'Apr':4, 'May':5, 'Jun':6, 
+        'Jul':7, 'Aug':8, 'Sep':9, 'Oct':10, 'Nov':11, 'Dec':12}
+    month = monthDict[txt[0]]
+    r = re.compile("[0-9]{1,2}")
+    num = re.search(r, txt[1]).group(0)
+    year = str(txt[2])
+    date = str(month) + "-" + str(num) + "-" + year
+    return date
+
+def clean_color(text_color):
+    color = re.sub('^\s*', text_color)
+    color = re.sub('\s*?', color)
+    
+    return color
 
 def pull_data_from_listing_text(text_car_details, text_selling_price, text_dougs_notes, text_model_year, text_auction_date, url):
-
-    def clean_make(text_car_details):
-        result = re.search('Make(.*?)</dd><dt>', text_car_details).group(1)
-        result = re.sub("</a", '', re.search('(?<=">)[^\n]+(?=>[^\n]*$)', result).group(0))
-        return result
-    def clean_model(text_car_details):
-        result = re.search('Model(.*?)</dd><dt>', text_car_details).group(1)
-        result = re.search("(?<=href).*", result).group(0)
-        result = re.search("(?<=>).*", result).group(0)
-        remove = re.search("(?=><).*", result).group(0)
-        result = re.sub("</a" + remove, '', result)
-        return result
-    def clean_all_but_make_model_location(text_car_details, keyword):
-        result = re.search(f'{keyword}(.*?)</dd><dt>', text_car_details).group(1)
-        if keyword == "Mileage":
-            r = re.compile("([0-9]+[,.]?[0-9]+)")
-            result = re.search(r, result)
-            result = result.group(0)
-            if "," in result:
-                result = result.replace(",", "")
-                return result
-        result = result[::-1]
-        result = result.split(">")[0]
-        result = result[::-1]
-        if keyword == "Title Status":
-            result = re.sub(r'\([^)]*\)', '', result)
-        return result
-
-    def clean_location(text_car_details):
-        reg = re.compile("\d{5}")
-        match = re.search(reg, text_car_details)
-        match = match.group(0)
-        return match
-
-    def get_sold_price(text_selling_price):
-        price = re.search('Sold(.*?)</span></span>', text_selling_price)
-        sell_type = "Sold For"
-        if price == None:
-            price = re.search('Bid(.*?)</span></span>', text_selling_price)
-            sell_type = "Bid To"
-        price = price.group(1)
-        price = price.split('>')
-        price = price[len(price)-1]
-        price = ''.join(re.findall("\d+", price))
-        return price, sell_type
-    def get_num_bids(text_selling_price):
-        bids = re.search('Bids(.*?)</span></li>', text_selling_price).group(1)
-        bids = bids.split('>')
-        bids = bids[len(bids)-1]
-        return bids
-    def check_reserve(text_dougs_notes):    
-        check = re.search("no reserve", text_dougs_notes)
-        if check:
-            return "No Reserve"
-        else:
-            return "Reserve"
-    def get_model_year(text_model_year):
-        year = re.search(r'[0-9]{4}', text_model_year).group(0)
-        return year
-    
-    def get_auction_date(text_auction_date):
-        txt = text_auction_date.split(" ")
-        monthDict = {"Jan":1, 'Feb':2, 'Mar':3, 'Apr':4, 'May':5, 'Jun':6, 
-            'Jul':7, 'Aug':8, 'Sep':9, 'Oct':10, 'Nov':11, 'Dec':12}
-        month = monthDict[txt[0]]
-        r = re.compile("[0-9]{1,2}")
-        num = re.search(r, txt[1]).group(0)
-        year = str(txt[2])
-        date = str(month) + "-" + str(num) + "-" + year
-        return date
-
-
     keywords = ["Make", "Model", "Mileage", "VIN","Title Status", "Location",
                 "Engine", "Drivetrain", "Transmission", "Body Style", 
                 "Exterior Color", "Interior Color"]
@@ -131,8 +138,8 @@ def pull_data_from_listing_text(text_car_details, text_selling_price, text_dougs
                        "Drivetrain": clean_all_but_make_model_location,
                        "Transmission": clean_all_but_make_model_location,
                        "Body Style": clean_all_but_make_model_location,
-                       "Exterior Color": clean_all_but_make_model_location,
-                       "Interior Color": clean_all_but_make_model_location}
+                       "Exterior Color": clean_color,
+                       "Interior Color": clean_color}
     for key in keywords:
         f = clean_data_dict[key]
         try:
