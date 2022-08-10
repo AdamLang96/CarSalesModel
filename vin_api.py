@@ -34,11 +34,3 @@ def process_vin_audit_data(VIN, Mileage, Date):
   
   return vin_audit_data
 
-# responses = []
-# for index, row in cardata2.iterrows():
-#   print(index)
-#   thisVin = row["VIN"]
-#   print(thisVin)
-#   apiResponse = getVinInfo(VIN=thisVin)
-#   print(apiResponse)
-#   responses.append(apiResponse)
