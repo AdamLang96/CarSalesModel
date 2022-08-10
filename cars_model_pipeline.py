@@ -11,7 +11,52 @@ from sklearn.compose import ColumnTransformer
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 from category_encoders import TargetEncoder
+import yfinance as yf
+pd.options.mode.chained_assignment = None  # default='warn'
 
+# collect ^GSPC data
+# augment weekends as the previous Friday close
+
+# find a way to collct federal treasury rate data (quarterly)
+# augment X with treasury bond and interest rates joining on listing_date
+
+sp500 = yf.download("^GSPC", start= '2019-1-1', end="2022-8-9") # start and end dates should be set by min and max dates from cars and bids data
+
+#go through each date in the column, and find gaps to fill
+#any gaps copy the data from the date before.. saturday and sunday copy Friday ADJ Close
+idx = pd.date_range('2019-1-1','2022-8-9')
+sp500 = sp500.reindex(idx, fill_value=0)
+
+for col in sp500.columns:
+  print(col)
+
+price_mem = -1
+vol_mem = -1
+first_ind = 0
+for i in range(len(sp500['Adj Close'])):
+  if sp500['Adj Close'][i] == 0:
+    if i == 0:
+      if sp500['Open'][i+1] == 0:
+        price_mem = sp500['Open'][i+2]
+        vol_mem = sp500['Volume'][i+2]
+      else:
+        price_mem = sp500['Open'][i+1]
+        vol_mem = sp500['Volume'][i+1]
+    sp500['Open'][i] = price_mem
+    sp500['High'][i] = price_mem
+    sp500['Low'][i] = price_mem
+    sp500['Close'][i] = price_mem
+    sp500['Adj Close'][i] = price_mem
+    sp500['Volume'][i] = vol_mem
+  else:
+    vol_mem = sp500['Volume'][i]
+    price_mem = sp500['Adj Close'][i]
+# sp500 = sp500[first_ind:]
+
+# pull Federaly Tresuray data
+
+
+print(sp500)
 
 
 ## read cars and bids data
