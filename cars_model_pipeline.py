@@ -1,139 +1,95 @@
+from turtle import shape
 from sqlalchemy import create_engine
-import pandas as pd
 import numpy as np
-import sklearn as sk
+import pandas as pd
 from sklearn.pipeline import make_pipeline
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import StandardScaler
 from sklearn.compose import ColumnTransformer
-from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 from category_encoders import TargetEncoder
+import pickle as pkl
+run_script = False
+training_rounds = 500
+import datetime as dt
 
-
-
-## read cars and bids data
 uri = "postgresql://codesmith:TensorFlow01?@cardata.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com:5432/postgres"
 engine = create_engine(uri)
-cars_bids_data = pd.read_sql_table("CarsBidData", con=engine)
+sqlstmnt = '''SELECT * FROM "CarsBidData"
+              INNER JOIN "VinAuditData"
+              ON "CarsBidData"."VIN" = "VinAuditData"."VIN"'''
 
-# read vin audit data
-vin_audit_data = pd.read_csv("full_vin_audit_data.csv")
+full_data = pd.read_sql_query(sqlstmnt, con=engine)
+full_data.drop(columns =["index", 'Unnamed: 0', "VIN", "Count", "URL"], inplace=True)
 
-#merge tables
+if True:
+    prelim_data = full_data[["Make", "Model", "Mileage", "Year", "Price", "Sold Type", "Num Bids", "Y_N_Reserve", 'Market_Value_Mean', 'Market_Value_Std', 'Count_Over_Days']]
 
-full_data = cars_bids_data.merge(vin_audit_data, on="VIN", how="inner")
-full_data.dropna(inplace=True)
+    num_cols = ["Mileage", "Year", "Num Bids", 'Market_Value_Mean', 'Market_Value_Std', 'Count_Over_Days']
 
-# print(full_data.shape)
+    cat_cols = ["Make", "Sold Type", "Y_N_Reserve", "Body Style", "Drivetrain"]
 
-# make_pipeline(OneHotEncoder())
+    target_cols = ["Model"]
 
-#Model - Sparse <- encode car type, year made, etc. 
-#Engine - <-  standardizable metrics like combustion volume and cylinder count, horsepower/kWh, electric (binary)
-#Transmission 4WD/AWD,Manual <- Manual/Automatic  RWD, FWD (4wd is both)
-#Location - Sparse (target encoding)
+    scaler = StandardScaler()
+    onehot = OneHotEncoder(handle_unknown="ignore")
+    target = TargetEncoder(handle_unknown="value")
 
-#mileage, num bids, number days, price would need to be normalize
+    num_transformer    = make_pipeline(scaler)
+    onehot_transformer = make_pipeline(onehot)
+    target_transformer = make_pipeline(target)
 
-prelim_data = full_data[["Make", "Model", "Mileage", "Year", "Price", "Sold Type", "Num Bids", "Y_N_Reserve", 'Num_Days', 'Market_Value_Mean', 'Market_Value_Std', 'Count_Over_Days']]
+    preprocessor = ColumnTransformer(
+        transformers=[('num', num_transformer, num_cols),
+                        ('cat', onehot_transformer, cat_cols),
+                        ('target', target_transformer, target_cols)], remainder="passthrough")
+    
+    y = prelim_data["Price"]
+    X = prelim_data
+    X.drop("Price", axis=1, inplace=True)
+    
 
-num_cols = ["Mileage", "Year", "Num Bids", 'Num_Days', 'Market_Value_Mean', 'Market_Value_Std', 'Count_Over_Days']
+    X_tr, X_tst, y_tr, y_tst = train_test_split(X, y, train_size= .8)
+    X_tr, X_val, y_tr, y_val = train_test_split(X_tr, y_tr, test_size=.25)
+    
+    
+    if run_script:
+        learning_rates = np.random.rand(training_rounds, 1)
+        max_depth      = np.random.randint(3, 10, training_rounds)
+        scoring_data = []
+        for i in range(training_rounds):
+            model = GradientBoostingRegressor(learning_rate=learning_rates[i], max_depth=max_depth[i])
+            pipe = make_pipeline(preprocessor, model)
+            pipe.fit(X_tr, y_tr)
+            val_score = pipe.score(X_val, y_val)
+            val_score = {"learning_rate":learning_rates[i], "max_depth":max_depth[i], "score": val_score}
+            scoring_data.append(val_score)
+        scoring_data = pd.DataFrame(scoring_data)
+        max_score_idx = scoring_data[["score"]].idxmax()
+        max_row   = scoring_data[max_score_idx, :]
+        model = GradientBoostingRegressor(learning_rate=max_row[0], max_depth=max_row[1])
+        y_tr = np.array(y_tr)
+        y_tr = np.reshape(y_tr, (y_tr.shape[0], 1))
+        y_val = np.array(y_val)
+        y_val = np.reshape(y_val, (y_val.shape[0], 1))
+        y_full = np.concatenate((y_tr, y_val), axis=0)
+        y_full = y_full.ravel()
+        x_full = pd.concat([X_tr, X_tst], axis=0)
+        pipe = make_pipeline(preprocessor, model)
+        pipe.fit(x_full, y_full)
+        filepath = f"pickled_models/{str(dt.date.today())}_model.pkl"
+        with open(filepath, "wb") as f:
+            pkl.dump(pipe, f)
 
-cat_cols = ["Make", "Sold Type", "Y_N_Reserve"]
-
-target_cols = ["Model"]
-
-scaler = StandardScaler()
-onehot = OneHotEncoder(handle_unknown="ignore")
-target = TargetEncoder(handle_unknown="value")
-
-num_transformer = make_pipeline(scaler)
-onehot_transformer = make_pipeline(onehot)
-target_transformer = make_pipeline(target)
-
-preprocessor = ColumnTransformer(
-      transformers=[('num', num_transformer, num_cols),
-                    ('cat', onehot_transformer, cat_cols),
-                    ('target', target_transformer, target_cols)], remainder="passthrough")
-
-
-model = GradientBoostingRegressor()
-pipe = make_pipeline(preprocessor, model)
-
-
-
-
-
-# print(prelim_data.dtypes)
-
-ohe = OneHotEncoder(sparse=True)
-label_encoder = LabelEncoder()
-
-make_column_encoder = ohe.fit_transform(prelim_data[['Make']])
-
-# target encode make column
-
-# binary encode below two columns
-sold_type_onehot = ohe.fit_transform(np.array(prelim_data['Sold Type']).reshape(-1,1)).toarray()
-sold_type_onehot = np.transpose(sold_type_onehot)[0]
-# print(sold_type_column_encoder.shape)
-
-reserve_onehot = ohe.fit_transform(np.array(prelim_data['Y_N_Reserve']).reshape(-1,1)).toarray()
-reserve_onehot = np.transpose(reserve_onehot)[0]
-# print(reserve_column_encoder.shape)
-
-mileage_arr = np.array(prelim_data['Mileage'])
-num_bids_arr = np.array(prelim_data['Num Bids'])
-days_arr = np.array(prelim_data['Num_Days'])
-price_arr = np.array(prelim_data['Price'])
-market_value_mean_arr = np.array(prelim_data['Market_Value_Mean'])
-market_value_std_arr = np.array(prelim_data['Market_Value_Std'])
-count_days_arr = np.array(prelim_data['Count_Over_Days'])
-
-
-standardized_mileage = preprocessing.scale(mileage_arr)
-standardized_bids = preprocessing.scale(num_bids_arr)
-standardized_days = preprocessing.scale(days_arr)
-standardized_price = preprocessing.scale(price_arr)
-standardized_market_value_mean = preprocessing.scale(market_value_mean_arr)
-stadardized_market_value_std = preprocessing.scale(market_value_std_arr)
-standardized_count_days = preprocessing.scale(count_days_arr)
-
-# print(normalized_mileage.shape)
-
-# print(make_column_encoder.toarray())
-#create pipeline to run encoding 
-#OneHotEncode our 
-# [[7000 elements], 
-# [7000 elements], 
-# [7000 elements], 
-# [7000 elements]]
-
-standardized_X = pd.DataFrame([standardized_mileage, standardized_bids, standardized_days, standardized_market_value_mean, stadardized_market_value_std, standardized_count_days, sold_type_onehot, reserve_onehot]).T # , make_column_encoder, sold_type_column_encoder, reserve_column_encoder
-# print(standardized_X)
-
-# print(prelim_data)
-prelim_data.to_csv("Data/prelim_data.csv", index=False)
-
-y = prelim_data["Price"]
-prelim_data.drop("Price", axis=1, inplace=True)
-X = prelim_data
-
-print(X)
-print(y)
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.33)
-
-pipe.fit(X_train, y_train)
-print(pipe.score(X_test, y_test))
+        
 
 
 
-# mod = GradientBoostingRegressor(n_estimators=500)
-# mod.fit(X_train, y_train)
 
-# print(mod.score(X_test, y_test))
-# print(mod.feature_importances_)
+
+
+
+
+
+
