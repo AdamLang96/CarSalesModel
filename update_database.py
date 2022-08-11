@@ -77,6 +77,7 @@ while len(new_listings):
                                     v14=cb_row["Sold Type"], v15=cb_row["Num Bids"],
                                     v16=cb_row["Y_N_Reserve"], v17=cb_row["Year"],
                                     v18=cb_row["Date"], v19=cb_row["URL"])
+                
         except:
             warnings.warn("Unable add data to CarsBidTable")
         

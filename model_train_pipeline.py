@@ -11,8 +11,14 @@ from category_encoders import TargetEncoder
 import pickle as pkl
 from sqlalchemy import text
 import yfinance as yf
+import os
 
-run_script = False
+MODEL_DIR = os.environ["MODEL_DIR"]
+MODEL_FILE_GBM = f"{str(dt.date.today())}_model.pkl"
+
+model_path = os.path.join(MODEL_DIR, MODEL_FILE_GBM)
+
+run_script = True
 training_rounds = 1
 
 uri = "postgresql://codesmith:TensorFlow01?@cardata.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com:5432/postgres"
@@ -68,7 +74,7 @@ full_data.drop("Date", axis=1, inplace=True)
 
 
 
-if False:
+if True:
     prelim_data = full_data[["Make", "Drivetrain", "Model", "Mileage", "Year", "Price", 
                              "Sold Type", "Body Style", "Num Bids", "Y_N_Reserve", 'Market_Value_Mean', 
                              'Market_Value_Std', 'Count_Over_Days', 'Adj Close', 'Engine', 'Title Status', 'Transmission']]
@@ -110,7 +116,6 @@ if False:
             pipe = make_pipeline(preprocessor, model)
             pipe.fit(X_tr, y_tr)
             val_score = pipe.score(X_val, y_val)
-            print(val_score)
             val_score = {"learning_rate":round(learning_rates[i][0], 3), "max_depth":int(max_depth[i]), "n_estimators":int(n_estimators[i]), "score": val_score}
             scoring_data.append(val_score)
         scoring_data = pd.DataFrame(scoring_data)
@@ -127,14 +132,14 @@ if False:
         pipe = make_pipeline(preprocessor, model)
         pipe.fit(X_tr, y_tr)
         test_score = pipe.score(X_tst, y_tst)
-        print(test_score)
-        filepath = f"pickled_models/{str(dt.date.today())}_model.pkl"
         new_id = id_max + 1
 
         with engine.connect() as conn:
             sqlstmt_ms = text('''INSERT INTO models_score
                               VALUES (:v0, :v1, :v2)''')
-            conn.execute(sqlstmt_ms, v0=new_id, v1=filepath, v2=test_score)
+            conn.execute(sqlstmt_ms, v0=new_id, v1=str(model_path), v2=test_score)
 
-        with open(filepath, "wb") as f:
+        with open(model_path, "wb") as f:
             pkl.dump(pipe, f)
+
+    
