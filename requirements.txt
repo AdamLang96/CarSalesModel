@@ -1,0 +1,8 @@
+sqlalchemy
+numpy
+pandas
+scikit-learn == 1.0.2
+category_encoders
+yfinance
+selenium
+flask

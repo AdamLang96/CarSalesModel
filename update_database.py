@@ -22,12 +22,11 @@ pull_index_CB= 'SELECT index FROM "CarsBidData"'
 pull_index_vin_audit= 'SELECT index FROM "VinAuditData"'
 
 with engine.connect() as connection:
-    urls = engine.execute(pull_urls).fetchall()
-    idx_VA  = engine.execute(pull_index_vin_audit).fetchall()
-    idx_CB  = engine.execute(pull_index_CB).fetchall()
+    urls = connection.execute(pull_urls).fetchall()
+    idx_VA  = connection.execute(pull_index_vin_audit).fetchall()
+    idx_CB  = connection.execute(pull_index_CB).fetchall()
 
 urls = [url for (url, ) in urls]
-
 idx_VA = [idx for (idx, ) in idx_VA]
 idx_VA = idx_VA[len(idx_VA) - 1]
 
@@ -36,37 +35,41 @@ idx_CB = idx_CB[len(idx_CB) - 1]
 
 try:
     first_page_listings = scrape_listings("/Users/adamgabriellang/Downloads/chromedriver", 0, 0)
-    new_listings = list(set(first_page_listings) - set(urls))
+    new_listings = list(set([item for item in first_page_listings if item not in urls]))
+    print(new_listings)
 except:
     raise ValueError("Failed to access CarsandBids.com")
 
-with engine.connect() as connection:
-    while len(new_listings):
-        j = 1
-        for i in new_listings:
+while len(new_listings):
+    print(len(new_listings))
+    j = 1
+    k = 1
+    for i in new_listings:
+        print(k)
+        k += 1
+        try:
+            car_details, selling_price_details, dougs_notes, model_year, auction_date = scrape_text_from_listing(i,  "/Users/adamgabriellang/Downloads/chromedriver")
+            cb_row = pull_data_from_listing_text(car_details, selling_price_details, dougs_notes, model_year, auction_date, i)
+            vin = cb_row["VIN"]
+            mileage = cb_row["Mileage"]
+            sale_date = cb_row["Date"]
+        except:
+            warnings.warn(f"Unable to pull data from listing {i}")
+        
+        try:
+            vin_audit_data = process_vin_audit_data(VIN = vin, Mileage= mileage, Date= sale_date)
+        except:
+            warnings.warn(f"Unable to pull data from VinAudit API for VIN {vin}")
+        
+        car_bids_sql_stmt = text('''INSERT INTO "CarsBidData"
+                                    VALUES (:v0, :v01, :v1, :v2, :v3, :v4,
+                                            :v5, :v6, :v7, :v8, :v9, :v10, 
+                                            :v11, :v12, :v13, :v14, :v15, 
+                                            :v16, :v17, :v18, :v19)''')
 
-            try:
-                car_details, selling_price_details, dougs_notes, model_year, auction_date = scrape_text_from_listing(i,  "/Users/adamgabriellang/Downloads/chromedriver")
-                cb_row = pull_data_from_listing_text(car_details, selling_price_details, dougs_notes, model_year, auction_date, i)
-                vin = cb_row["VIN"]
-                mileage = cb_row["Mileage"]
-                sale_date = cb_row["Date"]
-            except:
-                warnings.warn(f"Unable to pull data from listing {i}")
-            
-            try:
-                vin_audit_data = process_vin_audit_data(VIN = vin, Mileage= mileage, Date= sale_date)
-            except:
-                warnings.warn(f"Unable to pull data from VinAudit API for VIN {vin}")
-            
-            car_bids_sql_stmt = text('''INSERT INTO "CarsBidData"
-                                        VALUES (:v0, :v01, :v1, :v2, :v3, :v4,
-                                                :v5, :v6, :v7, :v8, :v9, :v10, 
-                                                :v11, :v12, :v13, :v14, :v15, 
-                                                :v16, :v17, :v18, :v19)''')
-
-            try:
-                idx_CB += 1
+        try:
+            idx_CB += 1
+            with engine.connect() as connection:
                 connection.execute(car_bids_sql_stmt,
                                     v0=idx_CB, v01=idx_CB,  v1= cb_row["Make"], v2=cb_row["Model"], v3=cb_row["Mileage"], v4=cb_row["VIN"],
                                     v5=cb_row["Title Status"], v6=cb_row["Location"], v7=cb_row["Engine"], v8=cb_row["Drivetrain"], v9=cb_row["Transmission"],
@@ -74,25 +77,27 @@ with engine.connect() as connection:
                                     v14=cb_row["Sold Type"], v15=cb_row["Num Bids"],
                                     v16=cb_row["Y_N_Reserve"], v17=cb_row["Year"],
                                     v18=cb_row["Date"], v19=cb_row["URL"])
-            except:
-                warnings.warn("Unable add data to CarsBidTable")
-            
-            vin_audit_sql_stmt = text('''INSERT INTO "VinAuditData"
-                                VALUES (:v0, :v1, :v2, :v3, :v4, :v5)''')
-            try:
-                idx_VA += 1
+        except:
+            warnings.warn("Unable add data to CarsBidTable")
+        
+        vin_audit_sql_stmt = text('''INSERT INTO "VinAuditData"
+                            VALUES (:v0, :v1, :v2, :v3, :v4, :v5)''')
+        try:
+            idx_VA += 1
+            with engine.connect() as connection:
                 connection.execute(vin_audit_sql_stmt,
                                     v0=idx_VA, v1= vin_audit_data["VIN"], v2=vin_audit_data["Market_Value_Mean"], v3=vin_audit_data["Market_Value_Std"], v4=vin_audit_data["Count"],
                                     v5=round(vin_audit_data["Count_Over_Days"], 3))
-            except:
-                warnings.warn("Unable add data to VinAuditData")
-        
-        try:
-            first_page_listings = scrape_listings("/Users/adamgabriellang/Downloads/chromedriver", j, 0)
-            new_listings = list(set(first_page_listings) - set(urls))
-            j += 1
         except:
-            raise ValueError("Failed to access CarsandBids.com")
+            warnings.warn("Unable add data to VinAuditData")
+    
+    try:
+        j += 1
+        print(j)
+        first_page_listings = scrape_listings("/Users/adamgabriellang/Downloads/chromedriver", j, 0)
+        new_listings = list(set([item for item in first_page_listings if item not in urls]))
+    except:
+        raise ValueError("Failed to access CarsandBids.com")
             
 
 

@@ -10,8 +10,9 @@ from sklearn.model_selection import train_test_split
 from category_encoders import TargetEncoder
 import pickle as pkl
 from sqlalchemy import text
+import yfinance as yf
 
-run_script = True
+run_script = False
 training_rounds = 1
 
 uri = "postgresql://codesmith:TensorFlow01?@cardata.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com:5432/postgres"
@@ -27,15 +28,55 @@ sqlstmt_cb = '''SELECT * FROM "CarsBidData"
               ON "CarsBidData"."VIN" = "VinAuditData"."VIN"'''
 
 full_data = pd.read_sql_query(sqlstmt_cb, con=engine)
-full_data.drop(columns =["index", 'Unnamed: 0', "VIN", "Count", "URL"], inplace=True)
+full_data["Date"] = pd.to_datetime(full_data["Date"])
 
-if True:
-    prelim_data = full_data[["Make", "Drivetrain", "Model", "Mileage", "Year", "Price", "Sold Type", "Body Style", "Num Bids", "Y_N_Reserve", 'Market_Value_Mean', 'Market_Value_Std', 'Count_Over_Days']]
-    num_cols = ["Mileage", "Year", "Num Bids", 'Market_Value_Mean', 'Market_Value_Std', 'Count_Over_Days']
 
-    cat_cols = ["Make", "Sold Type", "Y_N_Reserve", "Body Style", "Drivetrain"]
+sp500 = yf.download("^GSPC", start= '2019-1-1', end=str(dt.date.today())) # start and end dates should be set by min and max dates from cars and bids data
 
-    target_cols = ["Model"]
+
+idx = pd.date_range('2019-1-1', str(dt.date.today()))
+sp500 = sp500.reindex(idx, fill_value=0)
+
+price_mem = -1
+vol_mem = -1
+first_ind = 0
+for i in range(len(sp500['Adj Close'])):
+  if sp500['Adj Close'][i] == 0:
+    if i == 0:
+      if sp500['Open'][i+1] == 0:
+        price_mem = sp500['Open'][i+2]
+        vol_mem = sp500['Volume'][i+2]
+      else:
+        price_mem = sp500['Open'][i+1]
+        vol_mem = sp500['Volume'][i+1]
+    sp500['Open'][i] = price_mem
+    sp500['High'][i] = price_mem
+    sp500['Low'][i] = price_mem
+    sp500['Close'][i] = price_mem
+    sp500['Adj Close'][i] = price_mem
+    sp500['Volume'][i] = vol_mem
+  else:
+    vol_mem = sp500['Volume'][i]
+    price_mem = sp500['Adj Close'][i]
+
+
+sp500 = sp500["Adj Close"]
+full_data = full_data.merge(sp500, left_on="Date", right_index=True, how="left")
+full_data.drop("Date", axis=1, inplace=True)
+
+
+
+
+
+if False:
+    prelim_data = full_data[["Make", "Drivetrain", "Model", "Mileage", "Year", "Price", 
+                             "Sold Type", "Body Style", "Num Bids", "Y_N_Reserve", 'Market_Value_Mean', 
+                             'Market_Value_Std', 'Count_Over_Days', 'Adj Close', 'Engine', 'Title Status', 'Transmission']]
+    num_cols = ["Mileage", "Year", "Num Bids", 'Market_Value_Mean', 'Market_Value_Std', 'Count_Over_Days', 'Adj Close']
+
+    cat_cols = ["Make", "Sold Type", "Y_N_Reserve", "Body Style", "Drivetrain", "Title Status","Transmission"]
+
+    target_cols = ["Model", "Engine"]
 
     scaler = StandardScaler()
     onehot = OneHotEncoder(handle_unknown="ignore")
