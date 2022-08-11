@@ -2,8 +2,10 @@ from flask import Flask, request, jsonify
 import json
 import pickle as pkl
 import pandas as pd
+import os
+MODEL_DIR = os.environ["MODEL_DIR"]
 
-with open ("pickled_models/2022-08-10_model.pkl", "rb") as f:
+with open (str(MODEL_DIR), "rb") as f:
   mod = pkl.load(f)
   f.close()
 

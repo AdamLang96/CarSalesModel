@@ -7,4 +7,4 @@ RUN pip install -r requirements.txt
 COPY . .
 ENV MODEL_DIR=/app/my-model
 ENV MODEL_FILE_GBM=GBM.pkl
-ENTRYPOINT ["python3", "model_train_pipeline.py"]
+CMD ["python3", "model_train_pipeline.py"]

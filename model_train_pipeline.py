@@ -14,12 +14,12 @@ import yfinance as yf
 import os
 
 MODEL_DIR = os.environ["MODEL_DIR"]
-MODEL_FILE_GBM = f"{str(dt.date.today())}_model.pkl"
+MODEL_FILE_GBM = f"{str(dt.date.today())}_trythis_model.pkl"
+training_rounds = int(os.environ["training_rounds"])
 
 model_path = os.path.join(MODEL_DIR, MODEL_FILE_GBM)
+print(model_path)
 
-run_script = True
-training_rounds = 1
 
 uri = "postgresql://codesmith:TensorFlow01?@cardata.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com:5432/postgres"
 engine = create_engine(uri)
@@ -72,74 +72,70 @@ full_data.drop("Date", axis=1, inplace=True)
 
 
 
+prelim_data = full_data[["Make", "Drivetrain", "Model", "Mileage", "Year", "Price", 
+                            "Sold Type", "Body Style", "Num Bids", "Y_N_Reserve", 'Market_Value_Mean', 
+                            'Market_Value_Std', 'Count_Over_Days', 'Adj Close', 'Engine', 'Title Status', 'Transmission']]
+num_cols = ["Mileage", "Year", "Num Bids", 'Market_Value_Mean', 'Market_Value_Std', 'Count_Over_Days', 'Adj Close']
+
+cat_cols = ["Make", "Sold Type", "Y_N_Reserve", "Body Style", "Drivetrain", "Title Status","Transmission"]
+
+target_cols = ["Model", "Engine"]
+
+scaler = StandardScaler()
+onehot = OneHotEncoder(handle_unknown="ignore")
+target = TargetEncoder(handle_unknown="value")
+
+num_transformer    = make_pipeline(scaler)
+onehot_transformer = make_pipeline(onehot)
+target_transformer = make_pipeline(target)
+
+preprocessor = ColumnTransformer(
+    transformers=[('num', num_transformer, num_cols),
+                    ('cat', onehot_transformer, cat_cols),
+                    ('target', target_transformer, target_cols)], remainder="passthrough")
+
+prelim_data.dropna(inplace=True)
+y = prelim_data["Price"]
+X = prelim_data
+X.drop("Price", axis=1, inplace=True)
+
+X_tr, X_tst, y_tr, y_tst = train_test_split(X, y, train_size= .8)
+X_tr, X_val, y_tr, y_val = train_test_split(X_tr, y_tr, test_size=.25)
 
 
-if True:
-    prelim_data = full_data[["Make", "Drivetrain", "Model", "Mileage", "Year", "Price", 
-                             "Sold Type", "Body Style", "Num Bids", "Y_N_Reserve", 'Market_Value_Mean', 
-                             'Market_Value_Std', 'Count_Over_Days', 'Adj Close', 'Engine', 'Title Status', 'Transmission']]
-    num_cols = ["Mileage", "Year", "Num Bids", 'Market_Value_Mean', 'Market_Value_Std', 'Count_Over_Days', 'Adj Close']
 
-    cat_cols = ["Make", "Sold Type", "Y_N_Reserve", "Body Style", "Drivetrain", "Title Status","Transmission"]
+learning_rates = np.random.rand(training_rounds, 1)
+max_depth      = np.random.randint(3, 10, training_rounds)
+n_estimators   = np.random.uniform(100, 5000, training_rounds)
+scoring_data = []
+for i in range(training_rounds):
+    model = GradientBoostingRegressor(learning_rate=learning_rates[i], max_depth=int(max_depth[i]), n_estimators=int(n_estimators[i]))
+    pipe = make_pipeline(preprocessor, model)
+    pipe.fit(X_tr, y_tr)
+    val_score = pipe.score(X_val, y_val)
+    val_score = {"learning_rate":round(learning_rates[i][0], 3), "max_depth":int(max_depth[i]), "n_estimators":int(n_estimators[i]), "score": val_score}
+    scoring_data.append(val_score)
+scoring_data = pd.DataFrame(scoring_data)
+max_score_idx = scoring_data["score"].idxmax()
+max_row   = scoring_data.iloc[max_score_idx, :]
+model = GradientBoostingRegressor(learning_rate=max_row[0], max_depth=int(max_row[1]), n_estimators=int(max_row[2]))
+y_tr = np.array(y_tr)
+y_tr = np.reshape(y_tr, (y_tr.shape[0], 1))
+y_val = np.array(y_val)
+y_val = np.reshape(y_val, (y_val.shape[0], 1))
+y_full = np.concatenate((y_tr, y_val), axis=0)
+y_full = y_full.ravel()
+x_full = pd.concat([X_tr, X_tst], axis=0)
+pipe = make_pipeline(preprocessor, model)
+pipe.fit(X_tr, y_tr)
+test_score = pipe.score(X_tst, y_tst)
+new_id = id_max + 1
 
-    target_cols = ["Model", "Engine"]
+with engine.connect() as conn:
+    sqlstmt_ms = text('''INSERT INTO models_score
+                        VALUES (:v0, :v1, :v2)''')
+    conn.execute(sqlstmt_ms, v0=new_id, v1=str(model_path), v2=test_score)
 
-    scaler = StandardScaler()
-    onehot = OneHotEncoder(handle_unknown="ignore")
-    target = TargetEncoder(handle_unknown="value")
+with open(model_path, "wb") as f:
+    pkl.dump(pipe, f)
 
-    num_transformer    = make_pipeline(scaler)
-    onehot_transformer = make_pipeline(onehot)
-    target_transformer = make_pipeline(target)
-
-    preprocessor = ColumnTransformer(
-        transformers=[('num', num_transformer, num_cols),
-                        ('cat', onehot_transformer, cat_cols),
-                        ('target', target_transformer, target_cols)], remainder="passthrough")
-    
-    prelim_data.dropna(inplace=True)
-    y = prelim_data["Price"]
-    X = prelim_data
-    X.drop("Price", axis=1, inplace=True)
-
-    X_tr, X_tst, y_tr, y_tst = train_test_split(X, y, train_size= .8)
-    X_tr, X_val, y_tr, y_val = train_test_split(X_tr, y_tr, test_size=.25)
-    
-    
-    if run_script:
-        learning_rates = np.random.rand(training_rounds, 1)
-        max_depth      = np.random.randint(3, 10, training_rounds)
-        n_estimators   = np.random.uniform(100, 5000, training_rounds)
-        scoring_data = []
-        for i in range(training_rounds):
-            model = GradientBoostingRegressor(learning_rate=learning_rates[i], max_depth=int(max_depth[i]), n_estimators=int(n_estimators[i]))
-            pipe = make_pipeline(preprocessor, model)
-            pipe.fit(X_tr, y_tr)
-            val_score = pipe.score(X_val, y_val)
-            val_score = {"learning_rate":round(learning_rates[i][0], 3), "max_depth":int(max_depth[i]), "n_estimators":int(n_estimators[i]), "score": val_score}
-            scoring_data.append(val_score)
-        scoring_data = pd.DataFrame(scoring_data)
-        max_score_idx = scoring_data["score"].idxmax()
-        max_row   = scoring_data.iloc[max_score_idx, :]
-        model = GradientBoostingRegressor(learning_rate=max_row[0], max_depth=int(max_row[1]), n_estimators=int(max_row[2]))
-        y_tr = np.array(y_tr)
-        y_tr = np.reshape(y_tr, (y_tr.shape[0], 1))
-        y_val = np.array(y_val)
-        y_val = np.reshape(y_val, (y_val.shape[0], 1))
-        y_full = np.concatenate((y_tr, y_val), axis=0)
-        y_full = y_full.ravel()
-        x_full = pd.concat([X_tr, X_tst], axis=0)
-        pipe = make_pipeline(preprocessor, model)
-        pipe.fit(X_tr, y_tr)
-        test_score = pipe.score(X_tst, y_tst)
-        new_id = id_max + 1
-
-        with engine.connect() as conn:
-            sqlstmt_ms = text('''INSERT INTO models_score
-                              VALUES (:v0, :v1, :v2)''')
-            conn.execute(sqlstmt_ms, v0=new_id, v1=str(model_path), v2=test_score)
-
-        with open(model_path, "wb") as f:
-            pkl.dump(pipe, f)
-
-    

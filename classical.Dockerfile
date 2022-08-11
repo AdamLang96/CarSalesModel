@@ -9,4 +9,5 @@ ENV FLASK_APP="server"
 
 EXPOSE 8080/TCP
 
-CMD ["python3", "-m" , "flask", "run", "--host=0.0.0.0", "--port=8080"]
+ENTRYPOINT ["python3", "-m" , "flask", "run", "--host=0.0.0.0", "--port=8080"]
+
