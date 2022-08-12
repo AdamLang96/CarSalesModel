@@ -27,7 +27,8 @@ sqlstmt_cb = '''SELECT * FROM "CarsBidData"
               ON "CarsBidData"."VIN" = "VinAuditData"."VIN"'''
 
 full_data = pd.read_sql_query(sqlstmt_cb, con=engine)
-full_data.drop(columns =["index", 'Unnamed: 0', "VIN", "Count", "URL"], inplace=True)
+print(full_data)
+# full_data.drop(columns =["index", 'Unnamed: 0', "VIN", "Count", "URL"], inplace=True)
 
 if True:
     prelim_data = full_data[["Make", "Drivetrain", "Model", "Mileage", "Year", "Price", "Sold Type", "Body Style", "Num Bids", "Y_N_Reserve", 'Market_Value_Mean', 'Market_Value_Std', 'Count_Over_Days']]
@@ -69,7 +70,7 @@ if True:
             pipe = make_pipeline(preprocessor, model)
             pipe.fit(X_tr, y_tr)
             val_score = pipe.score(X_val, y_val)
-            print(val_score)
+            print(f'{val_score}  :val score')
             val_score = {"learning_rate":round(learning_rates[i][0], 3), "max_depth":int(max_depth[i]), "n_estimators":int(n_estimators[i]), "score": val_score}
             scoring_data.append(val_score)
         scoring_data = pd.DataFrame(scoring_data)
