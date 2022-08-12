@@ -10,6 +10,10 @@ import requests as rq
 from vin_api import getVinInfo
 import yfinance as yf
 import datetime
+import pickle
+import numpy as np
+import plotly.express as px
+
 uri = "postgresql://codesmith:TensorFlow01?@cardata.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com:5432/postgres"
 engine = create_engine(uri)
 
@@ -38,8 +42,6 @@ vin_sql_query = 'SELECT "VIN" FROM "CarsBidData" LIMIT 1;'
 with engine.connect() as connection:
     make_df = pd.read_sql_query(make_sql_query, con = connection)
     model_df = pd.read_sql_query(model_sql_query, con = connection)
-    exterior_color_df = pd.read_sql_query(exterior_color_sql_query, con = connection)
-    interior_color_df = pd.read_sql_query(interior_color_sql_query, con = connection)
     engine_df = pd.read_sql_query(engine_sql_query, con = connection)
     title_status_df = pd.read_sql_query(title_status_sql_query, con = connection)
     drive_train_df = pd.read_sql_query(drive_train_sql_query, con = connection)
@@ -47,7 +49,6 @@ with engine.connect() as connection:
     bodyStyle_df = pd.read_sql_query(bodyStyle_sql_query, con=connection)
     soldType_df = pd.read_sql_query(soldType_sql_query, con = connection)
     reserve_df = pd.read_sql_query(ynReserve_sql_query, con = connection)
-    location_df = pd.read_sql_query(location_sql_query, con = connection)
     vin = pd.read_sql_query(vin_sql_query, con = connection)
 
 # print(connection_to_data(engine))
@@ -56,49 +57,53 @@ header = st.container()
 dataset = st.container()
 model = st.container()
 years = range(1980, 2023)
+chart = st.container()
 
 with header:
-    st.title('Car Sales Model')
+    st.title('CarsAndBids Sale Price Projection')
 
 with dataset:
-    st.header('Cars Model Dataset')
+    st.header('Input Car Details')
 
     display = st.columns(1)   
 
     make_option = st.selectbox('MAKER', make_df)
     model_option = st.selectbox('Model', model_df)
     year_option = st.selectbox("Year", years)
-    exterior_color_option = st.selectbox('Exterior Color', exterior_color_df)
-    interior_color_option = st.selectbox('Interior Color', interior_color_df)
+    
     engine_option = st.selectbox('Engine', engine_df)
     title_option = st.selectbox('Title', title_status_df)
     drive_option = st.selectbox('Drive', drive_train_df)
     transmission_option = st.selectbox('Transmission', transmission_df)
     bodyStyle_option = st.selectbox('Body Style', bodyStyle_df)
-    soldType_option = st.selectbox('Sold Type', soldType_df)
     reserve_option = st.selectbox('Reserve', reserve_df)
     
-    location_option = st.selectbox('Location', location_df)
 
     mileage_option = st.text_input('Mileage')
 
     vin_option = st.text_input('Vin')
-    num_bids = st.text_input('NumBids')
     if st.button('Submit'):
         res = getVinInfo(vin_option)
+        
         mean = res["mean"]
         std = res["stdev"]
         count_over_days = res["count"] / 90
         
         newres= rq.post(url, json={"rows": [{"Make": make_option,"Model": model_option,"Mileage": float(mileage_option),
-                                     "Title Status": title_option , "Location": int(location_option), "Engine": engine_option,
+                                     "Title Status": title_option , "Engine": engine_option,
                                      "Drivetrain": drive_option,"Transmission" : transmission_option,"Body Style": bodyStyle_option,
-                                     "Exterior Color": exterior_color_option,"Interior Color" : interior_color_option, "Sold Type" : soldType_option,"Num Bids" : num_bids,
-                                     "Y_N_Reserve": reserve_option,"Year": int(year_option),"Market_Value_Mean": float(mean),"Market_Value_Std": float(std),
-                                     "Count_Over_Days": float(count_over_days),"Adj Close": float(sp500)}]})
-                
+                                     "Y_N_Reserve": reserve_option,"Year": int(year_option),"Market_Value_Mean": float(mean),
+                                     "Market_Value_Std": float(std), "Count_Over_Days": float(count_over_days),"Adj Close": float(sp500)}]})
+        newres = newres.json()
+        newres = newres[0]
+
+        if newres >= float(mean):
+            sellString = "recommended" 
+        else:
+            sellString = 'not recommended'
         
-        st.write(newres.json())
+        st.write(f"Predicted Price on CarsAndBids.com: ${round(newres)}")
+        st.write(f"It is {sellString} that you sell your car on CarsAndBids.com")
     
 
 
@@ -106,11 +111,22 @@ with dataset:
 # take row of csv, and make request to server
 
 with model:
-    st.header('Model Score')
+    st.header('Model Loss')
 
 
+with chart:
+    with open('pickled_models/version8-12.pkl', "rb") as f:
+       graph = pickle.load(f)
+       y = (graph[1].train_score_ / max(graph[1].train_score_ ))
+       x = range(0, graph[1].train_score_.shape[0])
+       plt = px.scatter(x=x, y=y, labels=dict(x="N_estimators", y="Loss (%)"))
+       st.plotly_chart(plt)
 
-    
+    #    feature_importances = graph[1].feature_importances_
+    #    feature_names = graph[1].feature_names_
+    #    feature_dict = {feature_names[i]: feature_importances for i in range(len(feature_names.shape[0]))}
+
+
 
 
     
