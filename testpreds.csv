@@ -1,0 +1,11 @@
+,Make,Model,Mileage,Title Status,Location,Engine,Drivetrain,Transmission,Body Style,Exterior Color,Interior Color,Sold Type,Num Bids,Y_N_Reserve,Year,Market_Value_Mean,Market_Value_Std,Count_Over_Days,Adj Close
+0,Porsche,Cayenne,167500.0,Clean ,2996,3.6L V6,4WD/AWD,Manual (6-Speed),SUV/Crossover,Black,Black,Sold For,16.0,No Reserve,2012.0,22312.47,3907,0.884393063583815,4509.3701171875
+1,Infiniti,Q45,74900.0,Clean ,50166,4.1L V8,Rear-wheel drive,Automatic (4-Speed),Sedan,Ivory Quartz,Beige,Sold For,41.0,Reserve,1998.0,5897.23,1341,0.0123152709359605,4290.60986328125
+2,Buick,Riviera,107100.0,Clean ,47104,3.8L Supercharged V6,Front-wheel drive,Automatic (4-speed),Coupe,Black,Gray,Sold For,26.0,No Reserve,1998.0,3720.24,485,0.0053120849933598,3215.570068359375
+3,Jeep,Comanche,156700.0,Clean ,58480,4.0L I6,4WD/AWD,Automatic (4-Speed),Truck,Red,Gray,Sold For,36.0,Reserve,1989.0,14458.42,3752,0.0251256281407035,4397.93994140625
+4,Acura,NSX,6900.0,Clean ,19,3.5L Turbocharged Hybrid V6,4WD/AWD,Automatic (9-Speed),Coupe,Thermal Orange Pearl,Black,Sold For,49.0,Reserve,2019.0,162235.16,18124,0.0861538461538461,4432.990234375
+5,Mitsubishi,Lancer Evolution,57400.0,Clean ,2102,2.0L Turbocharged I4,4WD/AWD,Manual (5-Speed),Sedan,Electric Blue Metallic,Black/Blue,Sold For,19.0,Reserve,2005.0,30738.44,4880,0.0596491228070175,4551.68017578125
+6,Ford,Explorer,38000.0,Clean ,36600,4.0L V6,4WD/AWD,Automatic (4-Speed),SUV/Crossover,Oxford White,Medium Graphite,Sold For,21.0,Reserve,1995.0,2999.42,698,0.0747663551401869,4354.18994140625
+7,Chevrolet,Corvette,48000.0,Clean ,56016,6.2L Supercharged V8,Rear-wheel drive,Manual (7-Speed),Coupe,Torch Red,Adrenaline Red,Bid To,18.0,Reserve,2015.0,72794.4,7308,1.004524886877828,4778.72998046875
+8,Audi,RS 7,102500.0,Clean ,90132,4.0L Turbocharged V8,4WD/AWD,Automatic (8-Speed),Sedan,Estoril Blue Crystal Effect,Black,Sold For,27.0,Reserve,2014.0,36083.83,5647,1.9,3900.860107421875
+9,Chevrolet,Trailblazer,164800.0,Clean ,87225, 6.0L V8,4WD/AWD,Automatic (4-Speed),SUV/Crossover,Black,Ebony,Sold For,32.0,Reserve,2007.0,17601.22,3735,0.2748267898383372,4202.0400390625
