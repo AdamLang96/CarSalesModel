@@ -13,12 +13,11 @@ from sqlalchemy import text
 import yfinance as yf
 import os
 
-MODEL_DIR = os.environ["MODEL_DIR"]
-MODEL_FILE_GBM = f"{str(dt.date.today())}_trythis_model.pkl"
-training_rounds = int(os.environ["training_rounds"])
+MODEL_DIR = str(os.environ["MODEL_DIR"])
+MODEL_FILE = str(os.environ["MODEL_FILE"])
+training_rounds = int(os.environ["TRAINING_ROUNDS"])
 
-model_path = os.path.join(MODEL_DIR, MODEL_FILE_GBM)
-print(model_path)
+model_path = os.path.join(MODEL_DIR, MODEL_FILE)
 
 
 uri = "postgresql://codesmith:TensorFlow01?@cardata.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com:5432/postgres"
@@ -105,12 +104,11 @@ for i in range(len(sp500['Adj Close'])):
 
 
 prelim_data = full_data[["Make", "Drivetrain", "Model", "Mileage", "Year", "Price", 
-                            "Sold Type", "Body Style", "Num Bids", "Y_N_Reserve", 'Market_Value_Mean', 
+                             "Body Style",  "Y_N_Reserve", 'Market_Value_Mean', 
                             'Market_Value_Std', 'Count_Over_Days', 'Adj Close', 'Engine', 'Title Status', 'Transmission']]
-num_cols = ["Mileage", "Year", "Num Bids", 'Market_Value_Mean', 'Market_Value_Std', 'Count_Over_Days', 'Adj Close']
 
-cat_cols = ["Make", "Sold Type", "Y_N_Reserve", "Body Style", "Drivetrain", "Title Status","Transmission"]
-
+num_cols = ["Mileage", "Year", 'Market_Value_Mean', 'Market_Value_Std', 'Count_Over_Days', 'Adj Close']
+cat_cols = ["Make",  "Y_N_Reserve", "Body Style", "Drivetrain", "Title Status","Transmission"]
 target_cols = ["Model", "Engine"]
 
 scaler = StandardScaler()
@@ -163,10 +161,10 @@ pipe.fit(X_tr, y_tr)
 test_score = pipe.score(X_tst, y_tst)
 new_id = id_max + 1
 
-with engine.connect() as conn:
-    sqlstmt_ms = text('''INSERT INTO models_score
-                        VALUES (:v0, :v1, :v2)''')
-    conn.execute(sqlstmt_ms, v0=new_id, v1=str(model_path), v2=test_score)
+# with engine.connect() as conn:
+#     sqlstmt_ms = text('''INSERT INTO models_score
+#                         VALUES (:v0, :v1, :v2)''')
+#     conn.execute(sqlstmt_ms, v0=new_id, v1=str(model_path), v2=test_score)
 
 with open(model_path, "wb") as f:
     pkl.dump(pipe, f)
