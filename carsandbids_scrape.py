@@ -48,6 +48,40 @@ def clean_make(text_car_details):
     result = re.sub("</a", '', re.search('(?<=">)[^\n]+(?=>[^\n]*$)', result).group(0))
     return result
 
+def clean_title(string):
+    string = str(string)
+    if re.search('Salvage', string):
+        val = "Salvage"
+    elif re.search('Clean', string):
+        val = "Clean"
+    else:
+        val = "Other"
+    return val
+    
+def clean_engine(string):
+    string = str(string)
+    if re.search('[A-Z]{1}[0-9]{1}', string):
+        val = re.search('[A-Z]{1}[0-9]{1}', string).group(0)
+    elif re.search('Flat-[0-9]{1}', string):
+        val = re.search('Flat-[0-9]{1}', string).group(0)
+    elif re.search('Electric', string):
+        val = "Electric"
+    else:
+        val = "Other"
+    return val
+
+
+def clean_trans(string):
+    string = str(string)
+    if re.search('Automatic', string):
+        val = "Automatic"
+    elif re.search('Manual', string):
+        val = "Manual"
+    else:
+        val = "Other"
+    return val
+
+
 def clean_model(text_car_details):
     result = re.search('Model(.*?)</dd><dt>', text_car_details).group(1)
     result = re.search("(?<=href).*", result).group(0)
@@ -70,6 +104,11 @@ def clean_all_but_make_model_location(text_car_details, keyword):
     result = result[::-1]
     if keyword == "Title Status":
         result = re.sub(r'\([^)]*\)', '', result)
+        result = clean_title(result)
+    if keyword == "Engine":
+        result = clean_engine(result)
+    if keyword == "Transmission":
+        result = clean_trans(result)
     return result
 
 def clean_location(text_car_details):
