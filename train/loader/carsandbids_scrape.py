@@ -1,3 +1,8 @@
+"""CarsandBids.com data scraper
+
+This script scrapes data from past auctions off of CarsandBids.com
+
+"""
 import re
 import time
 from selenium import webdriver
@@ -6,21 +11,25 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 
-
-#"/Users/adamgabriellang/Downloads/chromedriver"
-
 def scrape_listings(path_to_chrome_driver, page_number, delay_seconds_between_gets):
+    """Scrapes all listings from CarsAndBids.com
+    arguments:
+        path_to_chrome_driver
+        page_number
+        delay_seconds_between_gets
+    """
     if page_number == 0:
         url = "https://carsandbids.com/past-auctions/"
     else:
         url = f"https://carsandbids.com/past-auctions/?page={page_number}"
     options = webdriver.ChromeOptions()
     options.add_argument('headless')
-    s = Service(path_to_chrome_driver)
-    driver = webdriver.Chrome(service=s, options=options)
+    service = Service(path_to_chrome_driver)
+    driver = webdriver.Chrome(service=service, options=options)
     time.sleep(delay_seconds_between_gets)
     driver.get(url)
-    html_text = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, "/html/body/div/div[2]/div[2]/div/ul[1]"))).get_attribute("innerHTML")
+    html_text = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH,
+    "/html/body/div/div[2]/div[2]/div/ul[1]"))).get_attribute("innerHTML")
     html_text = html_text.split(" ")
     href_match = re.compile(".*href=")
     cleaned_urls_list = list(filter(href_match.match, html_text)) # Read Note below
@@ -30,25 +39,32 @@ def scrape_listings(path_to_chrome_driver, page_number, delay_seconds_between_ge
     return cleaned_urls_list
 
 def scrape_text_from_listing(url, path_to_chrome_driver):
+    """Scrapes all information from an individual listing on CarsandBids.com"""
     options = webdriver.ChromeOptions()
     options.add_argument('headless')
-    s = Service(path_to_chrome_driver)
-    driver = webdriver.Chrome(service=s, options=options)
+    service = Service(path_to_chrome_driver)
+    driver = webdriver.Chrome(service=service, options=options)
     driver.get(url)
-    html_text_car_details = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, "/html/body/div/div[2]/div[5]/div[1]/div[2]"))).get_attribute("innerHTML")
-    html_text_selling_price_details = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, "/html/body/div/div[2]/div[3]/div[1]/div/div"))).get_attribute("innerHTML")
-    html_text_dougs_notes = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, "/html/body/div/div[2]/div[5]/div[1]/div[3]/div[1]/div"))).get_attribute("innerHTML")
-    html_text_model_year_details = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, "/html/body/div/div[2]/div[1]/div/div[1]"))).get_attribute("innerHTML")
-    html_text_auction_date_details = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, "/html/body/div/div[2]/div[5]/div[1]/div[6]/div/ul/li[2]/div[2]"))).get_attribute("innerHTML")
-
-    return html_text_car_details, html_text_selling_price_details, html_text_dougs_notes, html_text_model_year_details, html_text_auction_date_details
+    car_details = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH,
+     "/html/body/div/div[2]/div[5]/div[1]/div[2]"))).get_attribute("innerHTML")
+    selling_price = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH,
+     "/html/body/div/div[2]/div[3]/div[1]/div/div"))).get_attribute("innerHTML")
+    dougs_notes = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH,
+     "/html/body/div/div[2]/div[5]/div[1]/div[3]/div[1]/div"))).get_attribute("innerHTML")
+    model_year = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH,
+     "/html/body/div/div[2]/div[1]/div/div[1]"))).get_attribute("innerHTML")
+    auction_date= WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH,
+     "/html/body/div/div[2]/div[5]/div[1]/div[6]/div/ul/li[2]/div[2]"))).get_attribute("innerHTML")
+    return car_details, selling_price, dougs_notes, model_year, auction_date
 
 def clean_make(text_car_details):
+    """Scrapes all information from an individual listing on CarsandBids.com"""
     result = re.search('Make(.*?)</dd><dt>', text_car_details).group(1)
     result = re.sub("</a", '', re.search('(?<=">)[^\n]+(?=>[^\n]*$)', result).group(0))
     return result
 
 def clean_title(string):
+    """Scrapes all information from an individual listing on CarsandBids.com"""
     string = str(string)
     if re.search('Salvage', string):
         val = "Salvage"
@@ -57,8 +73,9 @@ def clean_title(string):
     else:
         val = "Other"
     return val
-    
+
 def clean_engine(string):
+    """Scrapes all information from an individual listing on CarsandBids.com"""
     string = str(string)
     if re.search('[A-Z]{1}[0-9]{1}', string):
         val = re.search('[A-Z]{1}[0-9]{1}', string).group(0)
@@ -70,8 +87,8 @@ def clean_engine(string):
         val = "Other"
     return val
 
-
 def clean_trans(string):
+    """Scrapes all information from an individual listing on CarsandBids.com"""
     string = str(string)
     if re.search('Automatic', string):
         val = "Automatic"
@@ -83,6 +100,7 @@ def clean_trans(string):
 
 
 def clean_model(text_car_details):
+    """Scrapes all information from an individual listing on CarsandBids.com"""
     result = re.search('Model(.*?)</dd><dt>', text_car_details).group(1)
     result = re.search("(?<=href).*", result).group(0)
     result = re.search("(?<=>).*", result).group(0)
@@ -91,10 +109,11 @@ def clean_model(text_car_details):
     return result
 
 def clean_all_but_make_model_location(text_car_details, keyword):
+    """Scrapes all information from an individual listing on CarsandBids.com"""
     result = re.search(f'{keyword}(.*?)</dd><dt>', text_car_details).group(1)
     if keyword == "Mileage":
-        r = re.compile("([0-9]+[,.]?[0-9]+)")
-        result = re.search(r, result)
+        reg = re.compile("([0-9]+[,.]?[0-9]+)")
+        result = re.search(reg, result)
         result = result.group(0)
         if "," in result:
             result = result.replace(",", "")
@@ -112,15 +131,17 @@ def clean_all_but_make_model_location(text_car_details, keyword):
     return result
 
 def clean_location(text_car_details):
-    reg = re.compile("\d{5}")
+    """Scrapes all information from an individual listing on CarsandBids.com"""
+    reg = re.compile(r"\d{5}")
     match = re.search(reg, text_car_details)
     match = match.group(0)
     return match
 
 def get_sold_price(text_selling_price):
+    """Scrapes all information from an individual listing on CarsandBids.com"""
     price = re.search('Sold(.*?)</span></span>', text_selling_price)
     sell_type = "Sold For"
-    if price == None:
+    if price is None:
         price = re.search('Bid(.*?)</span></span>', text_selling_price)
         sell_type = "Bid To"
     price = price.group(1)
@@ -130,42 +151,50 @@ def get_sold_price(text_selling_price):
     return price, sell_type
 
 def get_num_bids(text_selling_price):
+    """Scrapes all information from an individual listing on CarsandBids.com"""
     bids = re.search('Bids(.*?)</span></li>', text_selling_price).group(1)
     bids = bids.split('>')
     bids = bids[len(bids)-1]
     return bids
 
-def check_reserve(text_dougs_notes):    
+def check_reserve(text_dougs_notes):
+    """Scrapes all information from an individual listing on CarsandBids.com""" 
     check = re.search("no reserve", text_dougs_notes)
     if check:
-        return "No Reserve"
+        retval = "No Reserve"
     else:
-        return "Reserve"
+        retval = "Reserve"
+    return retval
 
 def get_model_year(text_model_year):
+    """Scrapes all information from an individual listing on CarsandBids.com"""
     year = re.search(r'[0-9]{4}', text_model_year).group(0)
     return year
 
 def get_auction_date(text_auction_date):
+    """Scrapes all information from an individual listing on CarsandBids.com"""
     txt = text_auction_date.split(" ")
-    monthDict = {"Jan":1, 'Feb':2, 'Mar':3, 'Apr':4, 'May':5, 'Jun':6, 
+    month_dict = {"Jan":1, 'Feb':2, 'Mar':3, 'Apr':4, 'May':5, 'Jun':6, 
         'Jul':7, 'Aug':8, 'Sep':9, 'Oct':10, 'Nov':11, 'Dec':12}
-    month = monthDict[txt[0]]
-    r = re.compile("[0-9]{1,2}")
-    num = re.search(r, txt[1]).group(0)
+    month = month_dict[txt[0]]
+    reg = re.compile("[0-9]{1,2}")
+    num = re.search(reg, txt[1]).group(0)
     year = str(txt[2])
     date = str(month) + "-" + str(num) + "-" + year
     return date
 
 def clean_color(text_color):
-    color = re.sub('^\s*', text_color)
-    color = re.sub('\s*?', color)
-    
+    """Scrapes all information from an individual listing on CarsandBids.com"""
+    color = re.sub(pattern = r"^\s*", repl = "", string = text_color)
+    color = re.sub(pattern = r"\s*?", repl = "", string = color)
     return color
 
-def pull_data_from_listing_text(text_car_details, text_selling_price, text_dougs_notes, text_model_year, text_auction_date, url):
+def pull_data_from_listing_text(text_car_details, text_selling_price, text_dougs_notes,
+                                text_model_year, text_auction_date):
+
+    """Scrapes all information from an individual listing on CarsandBids.com"""
     keywords = ["Make", "Model", "Mileage", "VIN","Title Status", "Location",
-                "Engine", "Drivetrain", "Transmission", "Body Style", 
+                "Engine", "Drivetrain", "Transmission", "Body Style",
                 "Exterior Color", "Interior Color"]
     output_dict = {}
 
@@ -180,12 +209,23 @@ def pull_data_from_listing_text(text_car_details, text_selling_price, text_dougs
                        "Exterior Color": clean_color,
                        "Interior Color": clean_color}
     for key in keywords:
-        f = clean_data_dict[key]
+        func = clean_data_dict[key]
         try:
-            if key not in ["Make", "Model", "Location"]:    
-                output_dict[key] = f(text_car_details, key)
+            if key not in ["Make", "Model", "Location"]:
+                output_dict[key] = func(text_car_details, key)
             else:
-                output_dict[key] = f(text_car_details)
+                output_dict[key] = func(text_car_details)
+        # except error_1_from_func:
+        #   handle this case
+        # except error_2_from_func:
+        #   handle this case
+        # ...
+        # else:
+        #   default behavior
+        # finally:
+        #   if func(text_car_details)
+        #   if not output_dict[key]:
+        #       output_dict[key] = None
         except:
             output_dict[key] = None
     try:
@@ -211,15 +251,5 @@ def pull_data_from_listing_text(text_car_details, text_selling_price, text_dougs
         output_dict["Date"] = get_auction_date(text_auction_date)
     except:
         output_dict["Date"] = None
-    try:
-        output_dict["URL"] = str(url)
-    except:
-        output_dict["URL"] = None
-
 
     return output_dict
-
-
-
-
-
