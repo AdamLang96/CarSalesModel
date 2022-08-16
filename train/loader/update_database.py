@@ -1,4 +1,3 @@
-
 import warnings
 from sqlalchemy import create_engine
 from sqlalchemy import text
@@ -7,12 +6,11 @@ from carsandbids_scrape import pull_data_from_listing_text, scrape_text_from_lis
 from vin_api import process_vin_audit_data
 
 
-URI = """postgresql://codesmith:TensorFlow01?@cardata.ceq8tkxrvrbb.us-west-2.rds
-        .amazonaws.com:5432/postgres"""
+URI = """postgresql://codesmith:TensorFlow01?@cardata.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com:5432/postgres"""
 engine = create_engine(URI)
 
 PULL_URLS= 'SELECT "URL" FROM "CarsBidData"'
-PULL_INDEX_CB= 'SELECT index FROM "CarsBidData"'
+PULL_INDEX_CB= 'SELECT id_ FROM "CarsBidData"'
 PULL_INDEX_VIN_AUDIT= 'SELECT index FROM "VinAuditData"'
 
 with engine.connect() as connection:
@@ -44,6 +42,7 @@ while len(new_listings) > 0:
         try:
             car_details, selling_price_details, dougs_notes, model_year, auction_date = scrape_text_from_listing(i,  "/Users/adamgabriellang/Downloads/chromedriver")
             cb_row = pull_data_from_listing_text(car_details, selling_price_details, dougs_notes, model_year, auction_date)
+            print(cb_row)
             cb_row["URL"] = str(i)
             vin = cb_row["VIN"]
             mileage = cb_row["Mileage"]
@@ -52,12 +51,12 @@ while len(new_listings) > 0:
             warnings.warn(f"Unable to pull data from listing {i}")
         
         try:
-            vin_audit_data = process_vin_audit_data(VIN = vin, Mileage= mileage, Date= sale_date)
+            vin_audit_data = process_vin_audit_data(vin = vin, mileage= mileage, sale_date= sale_date)
         except:
             warnings.warn(f"Unable to pull data from VinAudit API for VIN {vin}")
             
         car_bids_sql_stmt = text('''INSERT INTO "CarsBidData"
-                                    VALUES (:v1, :v2, :v3, :v4,
+                                    VALUES (:v0, :v1, :v2, :v3, :v4,
                                             :v5, :v6, :v7, :v8, :v9, :v10, 
                                             :v11, :v12, :v13, :v14, :v15, 
                                             :v16, :v17, :v18, :v19)''')
@@ -66,6 +65,7 @@ while len(new_listings) > 0:
             idx_CB += 1
             with engine.connect() as connection:
                 connection.execute(car_bids_sql_stmt,
+                                    v0 = idx_CB,
                                     v1= cb_row["Make"],
                                     v2=cb_row["Model"],
                                     v3=cb_row["Mileage"],
@@ -78,9 +78,9 @@ while len(new_listings) > 0:
                                     v10=cb_row["Body Style"],
                                     v11=cb_row["Exterior Color"],
                                     v12=cb_row["Interior Color"],
-                                     v13=cb_row["Price"],
+                                    v13=cb_row["Price"],
                                     v14=cb_row["Sold Type"],
-                                     v15=cb_row["Num Bids"],
+                                    v15=cb_row["Num Bids"],
                                     v16=cb_row["Y_N_Reserve"],
                                     v17=cb_row["Year"],
                                     v18=cb_row["Date"],

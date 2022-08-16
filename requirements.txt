@@ -7,3 +7,4 @@ category_encoders
 yfinance
 selenium
 flask
+boto3

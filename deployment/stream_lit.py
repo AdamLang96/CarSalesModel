@@ -11,7 +11,7 @@ import streamlit as st
 import pandas as pd
 import yfinance as yf
 from sqlalchemy import create_engine
-from src.vin_api import getVinInfo
+from train.loader.vin_api import get_vin_info
 
 URI = """postgresql://codesmith:TensorFlow01?
         @cardata.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com:5432/postgres"""
@@ -72,7 +72,7 @@ with dataset:
     mileage_option = st.text_input('Mileage')
     vin_option = st.text_input('Vin')
     if st.button('Submit'):
-        res = getVinInfo(vin_option)
+        res = get_vin_info(vin_option)
         mean = res["mean"]
         std = res["stdev"]
         count_over_days = res["count"] / 90

@@ -1,4 +1,3 @@
-import datetime as dt
 from sqlalchemy import create_engine
 import numpy as np
 import pandas as pd
@@ -12,12 +11,14 @@ import pickle as pkl
 from sqlalchemy import text
 import yfinance as yf
 import os
+import boto3
+from datetime import date
+today = date.today()
+today = today.strftime("%m-%d-%Y")
 
-MODEL_DIR = str(os.environ["MODEL_DIR"])
-MODEL_FILE = str(os.environ["MODEL_FILE"])
+
 training_rounds = int(os.environ["TRAINING_ROUNDS"])
 
-model_path = os.path.join(MODEL_DIR, MODEL_FILE)
 
 uri = "postgresql://codesmith:TensorFlow01?@cardata.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com:5432/postgres"
 engine = create_engine(uri)
@@ -32,10 +33,10 @@ sqlstmt_cb = '''SELECT * FROM "CarsBidData"
               ON "CarsBidData"."VIN" = "VinAuditData"."VIN"'''
 
 full_data = pd.read_sql_query(sqlstmt_cb, con=engine)
+full_data["Date"] = pd.to_datetime(full_data["Date"])
+sp500 = yf.download("^GSPC", start= '2019-1-1', end=str(date.today())) 
 
-sp500 = yf.download("^GSPC", start= '2019-1-1', end=str(dt.date.today())) 
-
-idx = pd.date_range('2019-1-1', str(dt.date.today()))
+idx = pd.date_range('2019-1-1', str(date.today()))
 sp500 = sp500.reindex(idx, fill_value=0)
 
 price_mem = -1
@@ -60,8 +61,12 @@ for i in range(len(sp500['Adj Close'])):
     vol_mem = sp500['Volume'][i]
     price_mem = sp500['Adj Close'][i]
 
-prelim_data = full_data[["Make", "Drivetrain", "Model", "Mileage", "Year", "Price", 
-                             "Body Style",  "Y_N_Reserve", 'Market_Value_Mean', 
+sp500 = sp500["Adj Close"]
+full_data = full_data.merge(sp500, left_on="Date", right_index=True, how="left")
+full_data.drop("Date", axis=1, inplace=True)
+
+prelim_data = full_data[["Make", "Drivetrain", "Model", "Mileage", "Year", "Price",
+                             "Body Style",  "Y_N_Reserve", 'Market_Value_Mean',
                             'Market_Value_Std', 'Count_Over_Days', 'Adj Close', 'Engine', 'Title Status', 'Transmission']]
 
 num_cols = ["Mileage", "Year", 'Market_Value_Mean', 'Market_Value_Std', 'Count_Over_Days', 'Adj Close']
@@ -119,8 +124,14 @@ new_id = id_max + 1
 with engine.connect() as conn:
     sqlstmt_ms = text('''INSERT INTO models_score
                         VALUES (:v0, :v1, :v2)''')
-    conn.execute(sqlstmt_ms, v0=new_id, v1=str(model_path), v2=test_score)
+    conn.execute(sqlstmt_ms, v0=new_id, v1=str(today), v2=test_score)
 
-with open(model_path, "wb") as f:
-    pkl.dump(pipe, f)
+bucket = 'carsalesmodel'
+key = f'{today}.pkl'
+pkl_obj = pkl.dumps(pipe)
+s3= boto3.resource('s3')
+s3.Object(bucket,key).put(Body=pkl_obj)
 
+#AWS_ACCESS_KEY_ID
+#AWS_SECRET_ACCESS_KEY
+#AWS_REGION
