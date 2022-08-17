@@ -1,7 +1,5 @@
 ## Run selenium and chrome driver to scrape data from cloudbytes.dev
 import time
-import json
-import os.path
 import os
 import re
 from selenium import webdriver
@@ -12,6 +10,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from datetime import date, datetime
 import requests as rq
+import pandas as pd
 import warnings
 from sqlalchemy import create_engine
 from sqlalchemy import text
@@ -30,6 +29,8 @@ chrome_options.add_argument("--user-data-dir=/tmp/chrome-user-data")
 chrome_options.add_argument("--remote-debugging-port=9222")
 chrome = webdriver.Chrome("/opt/chromedriver", options=chrome_options)
 
+
+ret_list = []
 
 def scrape_listings(driver, page_number, delay_seconds_between_gets):
     """Scrapes all listings from CarsAndBids.com
@@ -366,6 +367,7 @@ def main():
                                         v17 = cb_row["Year"],
                                         v18 = cb_row["Date"],
                                         v19 = cb_row["URL"])
+                ret_list.append(cb_row)
                     
             except:
                 warnings.warn("Unable add data to CarsBidTable")
@@ -397,5 +399,6 @@ def handler(event=None, context=None):
     main()
     return {
         "statusCode": 200,
-        "ranSuccess" : True
+        "ranSuccess" : True,
+        "addedData": pd.Dataframe(ret_list)
     }
