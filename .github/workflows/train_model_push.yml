@@ -1,4 +1,4 @@
-name: Deploy to train_model.Docker ECR
+name: Deploy to train_model.Dockerfile to ECR
 
 on:
  
