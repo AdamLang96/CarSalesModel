@@ -20,7 +20,7 @@ today = today.strftime("%m-%d-%Y")
 training_rounds = int(os.environ["TRAINING_ROUNDS"])
 
 
-uri = "postgresql://codesmith:TensorFlow01?@cardata.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com:5432/postgres"
+uri = str(os.environ["URI"])
 engine = create_engine(uri)
 with engine.connect() as conn:
     get_idx = '''SELECT id_ FROM models_score'''
@@ -132,6 +132,3 @@ pkl_obj = pkl.dumps(pipe)
 s3= boto3.resource('s3')
 s3.Object(bucket,key).put(Body=pkl_obj)
 
-#AWS_ACCESS_KEY_ID
-#AWS_SECRET_ACCESS_KEY
-#AWS_REGION

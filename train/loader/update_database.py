@@ -4,9 +4,10 @@ from sqlalchemy import text
 from carsandbids_scrape import scrape_listings
 from carsandbids_scrape import pull_data_from_listing_text, scrape_text_from_listing
 from vin_api import process_vin_audit_data
+import os
 
 def main():
-    URI = """postgresql://codesmith:TensorFlow01?@cardata.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com:5432/postgres"""
+    URI = str(os.environ["URI"])
     engine = create_engine(URI)
 
     PULL_URLS= 'SELECT "URL" FROM "CarsBidData"'
@@ -28,21 +29,17 @@ def main():
     try:
         first_page_listings = scrape_listings("/Users/adamgabriellang/Downloads/chromedriver", 0, 0)
         new_listings = list(set([item for item in first_page_listings if item not in urls]))
-        print(new_listings)
     except:
         raise ValueError("Failed to access CarsandBids.com")
 
     while len(new_listings) > 0:
-        print(len(new_listings))
         j = 1
         k = 1
         for i in new_listings:
-            print(k)
             k += 1
             try:
                 car_details, selling_price_details, dougs_notes, model_year, auction_date = scrape_text_from_listing(i,  "/Users/adamgabriellang/Downloads/chromedriver")
                 cb_row = pull_data_from_listing_text(car_details, selling_price_details, dougs_notes, model_year, auction_date)
-                print(cb_row)
                 cb_row["URL"] = str(i)
                 vin = cb_row["VIN"]
                 mileage = cb_row["Mileage"]
@@ -65,26 +62,26 @@ def main():
                 idx_CB += 1
                 with engine.connect() as connection:
                     connection.execute(car_bids_sql_stmt,
-                                        v0 = idx_CB,
-                                        v1= cb_row["Make"],
-                                        v2=cb_row["Model"],
-                                        v3=cb_row["Mileage"],
-                                        v4=cb_row["VIN"],
-                                        v5=cb_row["Title Status"],
-                                        v6=cb_row["Location"],
-                                        v7=cb_row["Engine"],
-                                        v8=cb_row["Drivetrain"],
-                                        v9=cb_row["Transmission"],
-                                        v10=cb_row["Body Style"],
-                                        v11=cb_row["Exterior Color"],
-                                        v12=cb_row["Interior Color"],
-                                        v13=cb_row["Price"],
-                                        v14=cb_row["Sold Type"],
-                                        v15=cb_row["Num Bids"],
-                                        v16=cb_row["Y_N_Reserve"],
-                                        v17=cb_row["Year"],
-                                        v18=cb_row["Date"],
-                                        v19=cb_row["URL"])
+                                        v0  = idx_CB,
+                                        v1  = cb_row["Make"],
+                                        v2  = cb_row["Model"],
+                                        v3  = cb_row["Mileage"],
+                                        v4  = cb_row["VIN"],
+                                        v5  = cb_row["Title Status"],
+                                        v6  = cb_row["Location"],
+                                        v7  = cb_row["Engine"],
+                                        v8  = cb_row["Drivetrain"],
+                                        v9  = cb_row["Transmission"],
+                                        v10 = cb_row["Body Style"],
+                                        v11 = cb_row["Exterior Color"],
+                                        v12 = cb_row["Interior Color"],
+                                        v13 = cb_row["Price"],
+                                        v14 = cb_row["Sold Type"],
+                                        v15 = cb_row["Num Bids"],
+                                        v16 = cb_row["Y_N_Reserve"],
+                                        v17 = cb_row["Year"],
+                                        v18 = cb_row["Date"],
+                                        v19 = cb_row["URL"])
                     
             except:
                 warnings.warn("Unable add data to CarsBidTable")
@@ -101,18 +98,16 @@ def main():
                 warnings.warn("Unable add data to VinAuditData")
         
         try:
-            j += 1
-            print(j)
+            
             first_page_listings = scrape_listings("/Users/adamgabriellang/Downloads/chromedriver", j, 0)
+            j += 1
             new_listings = list(set([item for item in first_page_listings if item not in urls]))
         except:
             raise ValueError("Failed to access CarsandBids.com")
             
 
-main()
 
-
-            
+   
             
 
 

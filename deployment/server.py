@@ -16,8 +16,9 @@ from flask import Flask, request, jsonify
 import pandas as pd
 import boto3
 import pickle as pkl
+import os
+URI = os.environ["URI"]
 
-URI = """postgresql://codesmith:TensorFlow01?@cardata.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com:5432/postgres"""
 engine = create_engine(URI)
 
 scores = pd.read_sql_table('models_score', con=engine)

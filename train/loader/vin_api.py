@@ -6,9 +6,6 @@ Runs Vin_Api
 from datetime import date, datetime
 import requests as rq
 
-RUN_SCRIPT = False
-RUN_SCRIPT_2 = False
-
 def get_vin_info(vin, api_key = 'VA_DEMO_KEY', num_days = 90, mileage = 'average'):
     """pulls data from vinaudit api """
     vinaudit_url = f'https://marketvalue.vinaudit.com/getmarketvalue.php?key={api_key}&vin={vin}&format=json&period={num_days}&mileage={mileage}'

@@ -12,9 +12,9 @@ import pandas as pd
 import yfinance as yf
 from sqlalchemy import create_engine
 from train.loader.vin_api import get_vin_info
+import os
 
-URI = """postgresql://codesmith:TensorFlow01?
-        @cardata.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com:5432/postgres"""
+URI = os.environ["URI"]
 
 engine = create_engine(URI)
 
