@@ -28,8 +28,6 @@ chrome_options.add_argument("--single-process")
 chrome_options.add_argument("window-size=2560x1440")
 chrome_options.add_argument("--user-data-dir=/tmp/chrome-user-data")
 chrome_options.add_argument("--remote-debugging-port=9222")
-#chrome_options.add_argument("--data-path=/tmp/chrome-user-data")
-#chrome_options.add_argument("--disk-cache-dir=/tmp/chrome-user-data")
 chrome = webdriver.Chrome("/opt/chromedriver", options=chrome_options)
 
 
@@ -293,7 +291,7 @@ def process_vin_audit_data(vin, mileage, sale_date):
 
 
 def main():
-    URI = """postgresql://codesmith:TensorFlow01?@cardata.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com:5432/postgres"""
+    URI = str(os.environ["URI"])
     engine = create_engine(URI)
 
     PULL_URLS= 'SELECT "URL" FROM "CarsBidData"'
@@ -348,26 +346,26 @@ def main():
                 idx_CB += 1
                 with engine.connect() as connection:
                     connection.execute(car_bids_sql_stmt,
-                                        v0 = idx_CB,
-                                        v1= cb_row["Make"],
-                                        v2=cb_row["Model"],
-                                        v3=cb_row["Mileage"],
-                                        v4=cb_row["VIN"],
-                                        v5=cb_row["Title Status"],
-                                        v6=cb_row["Location"],
-                                        v7=cb_row["Engine"],
-                                        v8=cb_row["Drivetrain"],
-                                        v9=cb_row["Transmission"],
-                                        v10=cb_row["Body Style"],
-                                        v11=cb_row["Exterior Color"],
-                                        v12=cb_row["Interior Color"],
-                                        v13=cb_row["Price"],
-                                        v14=cb_row["Sold Type"],
-                                        v15=cb_row["Num Bids"],
-                                        v16=cb_row["Y_N_Reserve"],
-                                        v17=cb_row["Year"],
-                                        v18=cb_row["Date"],
-                                        v19=cb_row["URL"])
+                                        v0  = idx_CB,
+                                        v1  = cb_row["Make"],
+                                        v2  = cb_row["Model"],
+                                        v3  = cb_row["Mileage"],
+                                        v4  = cb_row["VIN"],
+                                        v5  = cb_row["Title Status"],
+                                        v6  = cb_row["Location"],
+                                        v7  = cb_row["Engine"],
+                                        v8  = cb_row["Drivetrain"],
+                                        v9  = cb_row["Transmission"],
+                                        v10 = cb_row["Body Style"],
+                                        v11 = cb_row["Exterior Color"],
+                                        v12 = cb_row["Interior Color"],
+                                        v13 = cb_row["Price"],
+                                        v14 = cb_row["Sold Type"],
+                                        v15 = cb_row["Num Bids"],
+                                        v16 = cb_row["Y_N_Reserve"],
+                                        v17 = cb_row["Year"],
+                                        v18 = cb_row["Date"],
+                                        v19 = cb_row["URL"])
                     
             except:
                 warnings.warn("Unable add data to CarsBidTable")
@@ -384,8 +382,8 @@ def main():
                 warnings.warn("Unable add data to VinAuditData")
         
         try:
-            j += 1
             first_page_listings = scrape_listings(chrome, j, 0)
+            j += 1
             new_listings = list(set([item for item in first_page_listings if item not in urls]))
         except:
             raise ValueError("Failed to access CarsandBids.com")
