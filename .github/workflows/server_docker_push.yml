@@ -1,4 +1,4 @@
-name: Deploy to ECR
+name: Deploy server.Dockerfile to ECR
 
 on:
  
