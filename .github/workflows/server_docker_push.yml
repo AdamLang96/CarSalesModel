@@ -32,7 +32,7 @@ jobs:
     - name: Build, tag, and push image to Amazon ECR
       env:
         ECR_REGISTRY: ${{ secrets.ECR_REPO_URI }}
-        ECR_REPOSITORY: carssalesmodel
+        ECR_REPOSITORY: classical_project_docker
         IMAGE_TAG: server_latest
       run: |
         docker build -f server.Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
