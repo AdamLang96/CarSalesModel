@@ -1,3 +1,5 @@
+name: Deploy update_database.py script to Lambda
+
 on:
   push:
     branches:
