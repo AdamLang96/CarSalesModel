@@ -315,21 +315,17 @@ def main():
     try:
         first_page_listings = scrape_listings(chrome, 0, 0)
         new_listings = list(set([item for item in first_page_listings if item not in urls]))
-        print(new_listings)
     except:
         raise ValueError("Failed to access CarsandBids.com")
 
     while len(new_listings) > 0:
-        print(len(new_listings))
         j = 1
         k = 1
         for i in new_listings:
-            print(k)
             k += 1
             try:
                 car_details, selling_price_details, dougs_notes, model_year, auction_date = scrape_text_from_listing(chrome, i)
                 cb_row = pull_data_from_listing_text(car_details, selling_price_details, dougs_notes, model_year, auction_date)
-                print(cb_row)
                 cb_row["URL"] = str(i)
                 vin = cb_row["VIN"]
                 mileage = cb_row["Mileage"]
@@ -389,8 +385,7 @@ def main():
         
         try:
             j += 1
-            print(j)
-            first_page_listings = scrape_listings(chrome, 0, 0)
+            first_page_listings = scrape_listings(chrome, j, 0)
             new_listings = list(set([item for item in first_page_listings if item not in urls]))
         except:
             raise ValueError("Failed to access CarsandBids.com")
