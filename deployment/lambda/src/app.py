@@ -389,5 +389,5 @@ def handler(event=None, context=None):
     return {
         "statusCode": 200,
         "ranSuccess" : True,
-        "addedData": pd.Dataframe(ret_list)
+        "addedData": pd.DataFrame(ret_list)
     }
