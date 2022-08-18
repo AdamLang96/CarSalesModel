@@ -1,7 +1,5 @@
 ## Run selenium and chrome driver to scrape data from cloudbytes.dev
 import time
-import json
-import os.path
 import os
 import re
 from selenium import webdriver
@@ -12,6 +10,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from datetime import date, datetime
 import requests as rq
+import pandas as pd
 import warnings
 from sqlalchemy import create_engine
 from sqlalchemy import text
@@ -30,6 +29,8 @@ chrome_options.add_argument("--user-data-dir=/tmp/chrome-user-data")
 chrome_options.add_argument("--remote-debugging-port=9222")
 chrome = webdriver.Chrome("/opt/chromedriver", options=chrome_options)
 
+
+ret_list = []
 
 def scrape_listings(driver, page_number, delay_seconds_between_gets):
     """Scrapes all listings from CarsAndBids.com
@@ -316,78 +317,68 @@ def main():
     except:
         raise ValueError("Failed to access CarsandBids.com")
 
-    while len(new_listings) > 0:
-        j = 1
-        k = 1
-        for i in new_listings:
-            k += 1
-            try:
-                car_details, selling_price_details, dougs_notes, model_year, auction_date = scrape_text_from_listing(chrome, i)
-                cb_row = pull_data_from_listing_text(car_details, selling_price_details, dougs_notes, model_year, auction_date)
-                cb_row["URL"] = str(i)
-                vin = cb_row["VIN"]
-                mileage = cb_row["Mileage"]
-                sale_date = cb_row["Date"]
-            except:
-                warnings.warn(f"Unable to pull data from listing {i}")
-            
-            try:
-                vin_audit_data = process_vin_audit_data(vin = vin, mileage= mileage, sale_date= sale_date)
-            except:
-                warnings.warn(f"Unable to pull data from VinAudit API for VIN {vin}")
-                
-            car_bids_sql_stmt = text('''INSERT INTO "CarsBidData"
-                                        VALUES (:v0, :v1, :v2, :v3, :v4,
-                                                :v5, :v6, :v7, :v8, :v9, :v10, 
-                                                :v11, :v12, :v13, :v14, :v15, 
-                                                :v16, :v17, :v18, :v19)''')
-
-            try:
-                idx_CB += 1
-                with engine.connect() as connection:
-                    connection.execute(car_bids_sql_stmt,
-                                        v0  = idx_CB,
-                                        v1  = cb_row["Make"],
-                                        v2  = cb_row["Model"],
-                                        v3  = cb_row["Mileage"],
-                                        v4  = cb_row["VIN"],
-                                        v5  = cb_row["Title Status"],
-                                        v6  = cb_row["Location"],
-                                        v7  = cb_row["Engine"],
-                                        v8  = cb_row["Drivetrain"],
-                                        v9  = cb_row["Transmission"],
-                                        v10 = cb_row["Body Style"],
-                                        v11 = cb_row["Exterior Color"],
-                                        v12 = cb_row["Interior Color"],
-                                        v13 = cb_row["Price"],
-                                        v14 = cb_row["Sold Type"],
-                                        v15 = cb_row["Num Bids"],
-                                        v16 = cb_row["Y_N_Reserve"],
-                                        v17 = cb_row["Year"],
-                                        v18 = cb_row["Date"],
-                                        v19 = cb_row["URL"])
-                    
-            except:
-                warnings.warn("Unable add data to CarsBidTable")
-            
-            vin_audit_sql_stmt = text('''INSERT INTO "VinAuditData"
-                                VALUES (:v0, :v1, :v2, :v3, :v4, :v5)''')
-            try:
-                idx_VA += 1
-                with engine.connect() as connection:
-                    connection.execute(vin_audit_sql_stmt,
-                                        v0=idx_VA, v1= vin_audit_data["VIN"], v2=vin_audit_data["Market_Value_Mean"], v3=vin_audit_data["Market_Value_Std"], v4=vin_audit_data["Count"],
-                                        v5=round(vin_audit_data["Count_Over_Days"], 3))
-            except:
-                warnings.warn("Unable add data to VinAuditData")
+    for i in new_listings:
+        try:
+            car_details, selling_price_details, dougs_notes, model_year, auction_date = scrape_text_from_listing(chrome, i)
+            cb_row = pull_data_from_listing_text(car_details, selling_price_details, dougs_notes, model_year, auction_date)
+            cb_row["URL"] = str(i)
+            vin = cb_row["VIN"]
+            mileage = cb_row["Mileage"]
+            sale_date = cb_row["Date"]
+        except:
+            warnings.warn(f"Unable to pull data from listing {i}")
         
         try:
-            first_page_listings = scrape_listings(chrome, j, 0)
-            j += 1
-            new_listings = list(set([item for item in first_page_listings if item not in urls]))
+            vin_audit_data = process_vin_audit_data(vin = vin, mileage= mileage, sale_date= sale_date)
         except:
-            raise ValueError("Failed to access CarsandBids.com")
-
+            warnings.warn(f"Unable to pull data from VinAudit API for VIN {vin}")
+            
+        car_bids_sql_stmt = text('''INSERT INTO "CarsBidData"
+                                    VALUES (:v0, :v1, :v2, :v3, :v4,
+                                            :v5, :v6, :v7, :v8, :v9, :v10, 
+                                            :v11, :v12, :v13, :v14, :v15, 
+                                            :v16, :v17, :v18, :v19)''')
+        try:
+            idx_CB += 1
+            with engine.connect() as connection:
+                connection.execute(car_bids_sql_stmt,
+                                    v0  = idx_CB,
+                                    v1  = cb_row["Make"],
+                                    v2  = cb_row["Model"],
+                                    v3  = cb_row["Mileage"],
+                                    v4  = cb_row["VIN"],
+                                    v5  = cb_row["Title Status"],
+                                    v6  = cb_row["Location"],
+                                    v7  = cb_row["Engine"],
+                                    v8  = cb_row["Drivetrain"],
+                                    v9  = cb_row["Transmission"],
+                                    v10 = cb_row["Body Style"],
+                                    v11 = cb_row["Exterior Color"],
+                                    v12 = cb_row["Interior Color"],
+                                    v13 = cb_row["Price"],
+                                    v14 = cb_row["Sold Type"],
+                                    v15 = cb_row["Num Bids"],
+                                    v16 = cb_row["Y_N_Reserve"],
+                                    v17 = cb_row["Year"],
+                                    v18 = cb_row["Date"],
+                                    v19 = cb_row["URL"])
+            ret_list.append(cb_row)
+                
+        except:
+            warnings.warn("Unable add data to CarsBidTable")
+        
+        vin_audit_sql_stmt = text('''INSERT INTO "VinAuditData"
+                            VALUES (:v0, :v1, :v2, :v3, :v4, :v5)''')
+        try:
+            idx_VA += 1
+            with engine.connect() as connection:
+                connection.execute(vin_audit_sql_stmt,
+                                    v0=idx_VA, v1= vin_audit_data["VIN"], v2=vin_audit_data["Market_Value_Mean"], v3=vin_audit_data["Market_Value_Std"], v4=vin_audit_data["Count"],
+                                    v5=round(vin_audit_data["Count_Over_Days"], 3))
+        except:
+            warnings.warn("Unable add data to VinAuditData")
+    
+    
 
 
 
@@ -397,5 +388,6 @@ def handler(event=None, context=None):
     main()
     return {
         "statusCode": 200,
-        "ranSuccess" : True
+        "ranSuccess" : True,
+        "addedData": pd.Dataframe(ret_list)
     }
