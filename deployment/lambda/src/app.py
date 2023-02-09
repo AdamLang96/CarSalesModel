@@ -28,7 +28,7 @@ chrome_options.add_argument("--remote-debugging-port=9222")
 chrome = webdriver.Chrome("/opt/chromedriver", options=chrome_options)
 
 
-def scrape_listings(path_to_chrome_driver, page_number, delay_seconds_between_gets):
+def scrape_listings(driver, page_number, delay_seconds_between_gets):
     """Scrapes all listings from CarsAndBids.com
     arguments:
         path_to_chrome_driver
@@ -41,8 +41,6 @@ def scrape_listings(path_to_chrome_driver, page_number, delay_seconds_between_ge
         url = f"https://carsandbids.com/past-auctions/?page={page_number}"
     options = webdriver.ChromeOptions()
     options.add_argument('headless')
-    service = Service(path_to_chrome_driver)
-    driver = webdriver.Chrome(service=service, options=options)
     time.sleep(delay_seconds_between_gets)
     driver.get(url)
     html_text = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH,
@@ -55,12 +53,10 @@ def scrape_listings(path_to_chrome_driver, page_number, delay_seconds_between_ge
     cleaned_urls_list = ["https://carsandbids.com" + s for s in cleaned_urls_list]
     return cleaned_urls_list
 
-def scrape_text_from_listing(url, path_to_chrome_driver):
+def scrape_text_from_listing(url, driver):
     """Scrapes all information from an individual listing on CarsandBids.com"""
     options = webdriver.ChromeOptions()
     options.add_argument('headless')
-    service = Service(path_to_chrome_driver)
-    driver = webdriver.Chrome(service=service, options=options)
     driver.get(url)
     car_details = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH,
      "/html/body/div/div[2]/div[5]/div[1]/div[2]"))).get_attribute("innerHTML")
@@ -328,7 +324,7 @@ def main():
     k = 0
     while more_listings:
         try:
-            first_page_listings = scrape_listings("/Users/adamgabriellang/Downloads/chromedriver_new/chromedriver", k, 0)
+            first_page_listings = scrape_listings(chrome, k, 0)
             new_listings = [item for item in first_page_listings if item not in urls]
             new_listings = list(set(new_listings))
             if not len(more_listings):
@@ -342,7 +338,7 @@ def main():
 
         for i in new_listings:
             try:
-                car_details, selling_price_details, dougs_notes, model_year, auction_date = scrape_text_from_listing(i,  "/Users/adamgabriellang/Downloads/chromedriver_new/chromedriver")
+                car_details, selling_price_details, dougs_notes, model_year, auction_date = scrape_text_from_listing(i, chrome)
                 cb_row = pull_data_from_listing_text(car_details, selling_price_details, dougs_notes, model_year, auction_date)
                 cb_row["URL"] = str(i)
                 vin = cb_row["VIN"]
