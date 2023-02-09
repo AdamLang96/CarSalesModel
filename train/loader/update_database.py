@@ -9,9 +9,9 @@ def main():
     URI = "postgresql+psycopg2://codesmith:TensorFlow01?@database-1.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com/postgres"
     engine = create_engine(URI)
 
-    PULL_URLS= 'SELECT "url" FROM "cars_final"'
-    PULL_INDEX_CB= 'SELECT id FROM "cars_final"'
-    PULL_INDEX_VIN_AUDIT= 'SELECT id FROM "vin_newest_final"'
+    PULL_URLS= text('SELECT "url" FROM "cars_final"')
+    PULL_INDEX_CB= text('SELECT id FROM "cars_final"')
+    PULL_INDEX_VIN_AUDIT= text('SELECT id FROM "vin_newest_final"')
 
     with engine.connect() as connection:
         urls = connection.execute(PULL_URLS).fetchall()

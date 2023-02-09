@@ -34,9 +34,9 @@ else:
   id_max = max([id_ for (id_, ) in idx])
 
 
-sqlstmt_cb = '''SELECT * FROM "cars_final"
+sqlstmt_cb = text('''SELECT * FROM "cars_final"
               INNER JOIN "vin_newest_final"
-              ON "cars_final"."vin" = "vin_newest_final"."vin"'''
+              ON "cars_final"."vin" = "vin_newest_final"."vin"''')
 
 full_data = pd.read_sql_query(sqlstmt_cb, con=engine)
 full_data["Date"] = pd.to_datetime(full_data["date"])
