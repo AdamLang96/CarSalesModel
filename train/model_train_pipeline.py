@@ -13,29 +13,35 @@ import yfinance as yf
 import os
 import boto3
 from datetime import date
+from uuid import uuid4
 today = date.today()
 today = today.strftime("%m-%d-%Y")
-
+today = str(today) + str(uuid4())
 
 training_rounds = int(os.environ["TRAINING_ROUNDS"])
-
-
 uri = str(os.environ["URI"])
+model_env = str(os.environ["ENVIRONMENT"])
+
 engine = create_engine(uri)
 with engine.connect() as conn:
-    get_idx = '''SELECT id_ FROM models_score'''
+    get_idx = '''SELECT id FROM models_score'''
     idx = conn.execute(get_idx).fetchall()
+    print(f'idx: {idx}')
+    
+if idx == []:
+  id_max = 0
+else:
+  id_max = max([id_ for (id_, ) in idx])
 
-id_max = max([id_ for (id_, ) in idx])
 
-sqlstmt_cb = '''SELECT * FROM "CarsBidData"
-              INNER JOIN "VinAuditData"
-              ON "CarsBidData"."VIN" = "VinAuditData"."VIN"'''
+sqlstmt_cb = '''SELECT * FROM "cars_final"
+              INNER JOIN "vin_newest_final"
+              ON "cars_final"."vin" = "vin_newest_final"."vin"'''
 
 full_data = pd.read_sql_query(sqlstmt_cb, con=engine)
-full_data["Date"] = pd.to_datetime(full_data["Date"])
+full_data["Date"] = pd.to_datetime(full_data["date"])
+full_data.drop(columns="date")
 sp500 = yf.download("^GSPC", start= '2019-1-1', end=str(date.today())) 
-
 idx = pd.date_range('2019-1-1', str(date.today()))
 sp500 = sp500.reindex(idx, fill_value=0)
 
@@ -60,19 +66,23 @@ for i in range(len(sp500['Adj Close'])):
   else:
     vol_mem = sp500['Volume'][i]
     price_mem = sp500['Adj Close'][i]
-
-sp500 = sp500["Adj Close"]
+full_data.drop_duplicates(inplace=True, subset=['vin'])
+sp500 = pd.DataFrame(sp500)
+sp500 = sp500.groupby(sp500.index).first()
+full_data.reset_index()
 full_data = full_data.merge(sp500, left_on="Date", right_index=True, how="left")
-full_data.drop("Date", axis=1, inplace=True)
+prelim_data = full_data[["make", "drivetrain", "model", "mileage", "year", "price",
+                             "bodystyle",  "y_n_reserve", 'market_value_mean',
+                            'market_value_std', 'count_over_days', 'Adj Close', 'engine', 'status', 'transmission']]
 
-prelim_data = full_data[["Make", "Drivetrain", "Model", "Mileage", "Year", "Price",
-                             "Body Style",  "Y_N_Reserve", 'Market_Value_Mean',
-                            'Market_Value_Std', 'Count_Over_Days', 'Adj Close', 'Engine', 'Title Status', 'Transmission']]
+prelim_data.dropna(inplace=True, axis=0)
 
-num_cols = ["Mileage", "Year", 'Market_Value_Mean', 'Market_Value_Std', 'Count_Over_Days', 'Adj Close']
-cat_cols = ["Make",  "Y_N_Reserve", "Body Style", "Drivetrain", "Title Status","Transmission"]
-target_cols = ["Model", "Engine"]
-
+# convert these to numeric and change capitalization
+num_cols = ["mileage", "year", 'market_value_mean', 'market_value_std', 'count_over_days', 'Adj Close']
+for i in num_cols:
+  prelim_data[i] = prelim_data[i].astype(float)
+cat_cols = ["make",  "y_n_reserve", "bodystyle", "drivetrain", "status","transmission"]
+target_cols = ["model", "engine"]
 scaler = StandardScaler()
 onehot = OneHotEncoder(handle_unknown="ignore")
 target = TargetEncoder(handle_unknown="value")
@@ -86,10 +96,10 @@ preprocessor = ColumnTransformer(
                     ('cat', onehot_transformer, cat_cols),
                     ('target', target_transformer, target_cols)], remainder="passthrough")
 
-prelim_data.dropna(inplace=True)
-y = prelim_data["Price"]
+
+y = prelim_data["price"].astype(float)
 X = prelim_data
-X.drop("Price", axis=1, inplace=True)
+X.drop(columns=["price"], inplace=True)
 
 X_tr, X_tst, y_tr, y_tst = train_test_split(X, y, train_size= .8)
 X_tr, X_val, y_tr, y_val = train_test_split(X_tr, y_tr, test_size=.25)
@@ -123,8 +133,8 @@ new_id = id_max + 1
 
 with engine.connect() as conn:
     sqlstmt_ms = text('''INSERT INTO models_score
-                        VALUES (:v0, :v1, :v2)''')
-    conn.execute(sqlstmt_ms, v0=new_id, v1=str(today), v2=test_score)
+                        VALUES (:v0, :v1, :v2, :v3)''')
+    conn.execute(sqlstmt_ms, v0=new_id, v1=str(today), v2=test_score, v3=model_env)
 
 bucket = 'carsalesmodel'
 key = f'{today}.pkl'

@@ -26,13 +26,10 @@ def process_vin_audit_data(vin, mileage, sale_date):
         num_days = 90
     else:
         num_days = days
-    try:
-        vin_audit_data = get_vin_info(vin = vin, mileage = mileage, num_days = num_days)
-        vin_audit_data = {"VIN": vin_audit_data["vin"],
-                          "Market_Value_Mean": vin_audit_data["mean"],
-                          "Market_Value_Std": vin_audit_data["stdev"],
-                          "Count": vin_audit_data["count"],
-                          "Count_Over_Days": vin_audit_data["count"] / num_days}
-    except:
-        vin_audit_data = None
+    vin_audit_data = get_vin_info(vin = vin, mileage = mileage, num_days = num_days)
+    vin_audit_data = {"VIN": str(vin_audit_data["vin"]),
+                          "Market_Value_Mean": str(vin_audit_data["mean"]),
+                          "Market_Value_Std": str(vin_audit_data["stdev"]),
+                          "Count": str(vin_audit_data["count"]),
+                          "Count_Over_Days": str(round(vin_audit_data["count"] / num_days, 3))}
     return vin_audit_data
