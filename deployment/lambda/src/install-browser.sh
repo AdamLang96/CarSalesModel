@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 echo "Downloading Chromium..."
 curl "https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Linux_x64%2F$CHROMIUM_VERSION%2Fchrome-linux.zip?generation=1652397748160413&alt=media" > /tmp/chromium.zip
 
