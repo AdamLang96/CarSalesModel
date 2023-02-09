@@ -24,7 +24,7 @@ model_env = str(os.environ["ENVIRONMENT"])
 
 engine = create_engine(uri)
 with engine.connect() as conn:
-    get_idx = '''SELECT id FROM models_score'''
+    get_idx = text('''SELECT "id" FROM "models_score"''')
     idx = conn.execute(get_idx).fetchall()
     print(f'idx: {idx}')
     
