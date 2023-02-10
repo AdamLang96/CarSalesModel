@@ -28,11 +28,12 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v1
 
     - name: Build, tag, and push image to Amazon ECR
-    - working-directory: deployment/lambda_webscraper
+
       env:
         ECR_REGISTRY: ${{ secrets.ECR_REPO_URI }}
         ECR_REPOSITORY: lambdas
         IMAGE_TAG: webscraper_latest
       run: |
+      working-directory: deployment/lambda_webscraper
         docker build -f Dockerfile $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
