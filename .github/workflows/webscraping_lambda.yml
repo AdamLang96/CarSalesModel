@@ -5,7 +5,6 @@ on:
     branches: [ main ]
     
 jobs:
-  
   build:
     defaults:
       run:
@@ -38,3 +37,14 @@ jobs:
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+    - name: Update Lambda function with latest ECR image
+      env:
+        LAMBDA_NAME: WebScraper
+        ECR_REGISTRY: ${{ secrets.ECR_REPO_URI }}
+        ECR_REPOSITORY: lambdas
+        IMAGE_TAG: webscraper_latest
+      run: |
+          aws lambda update-function-code \
+          --function-name $LAMBDA_NAME \
+          --image-uri $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
