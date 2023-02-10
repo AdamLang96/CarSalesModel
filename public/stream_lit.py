@@ -11,7 +11,7 @@ import streamlit as st
 import pandas as pd
 import yfinance as yf
 from sqlalchemy import create_engine
-from train.loader.vin_api import get_vin_info
+from deployment.lambda_webscraper.vin_api import get_vin_info
 import os
 
 URI = os.environ["URI"]

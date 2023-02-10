@@ -1,9 +1,12 @@
-name: Deploy to train_model.Dockerfile to ECR
+name: Deploy to Docker image for model training lambda
 
 on:
- 
   push:
     branches: [ main ]
+
+defaults:
+  run:
+    working-directory: deployment/lambda_model_training
 
 jobs:
   
@@ -32,8 +35,8 @@ jobs:
     - name: Build, tag, and push image to Amazon ECR
       env:
         ECR_REGISTRY: ${{ secrets.ECR_REPO_URI }}
-        ECR_REPOSITORY: classical_project_docker
+        ECR_REPOSITORY: lambdas
         IMAGE_TAG: train_model_latest
       run: |
-        docker build -f train_model.Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker build -f Dockerfile $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG

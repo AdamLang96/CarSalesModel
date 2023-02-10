@@ -1,6 +1,0 @@
-selenium
-requests
-pandas
-psycopg2-binary
-sqlalchemy == 1.3.9
-
