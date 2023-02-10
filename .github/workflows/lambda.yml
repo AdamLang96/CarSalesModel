@@ -7,7 +7,9 @@ on:
 jobs:
   
   build:
-    
+    defaults:
+      run:
+        working-directory: deployment/lambda_webscraper
     name: Build Image
     runs-on: ubuntu-latest
 
@@ -34,5 +36,5 @@ jobs:
         ECR_REPOSITORY: lambdas
         IMAGE_TAG: webscraper_latest
       run: |
-        docker build -f deployment/lambda_webscraper/Dockerfile $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG deployment/lambda_webscraper
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
