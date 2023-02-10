@@ -15,6 +15,13 @@ import boto3
 from datetime import date
 from uuid import uuid4
 
+session = boto3.Session(
+    aws_access_key_id = os.environ["ACCESS_KEY"],
+    aws_secret_access_key=os.environ["ACCESS_SECRET"],
+    region_name = os.environ["REGION"]
+)
+
+
 def main():
   today = date.today()
   today = today.strftime("%m-%d-%Y")
@@ -23,6 +30,7 @@ def main():
   training_rounds = int(os.environ["TRAINING_ROUNDS"])
   uri = str(os.environ["URI"])
   model_env = str(os.environ["ENVIRONMENT"])
+  
 
   engine = create_engine(uri)
   with engine.connect() as conn:
@@ -140,8 +148,18 @@ def main():
 
   bucket = 'carsalesmodel'
   key = f'{today}.pkl'
-  pkl_obj = pkl.dumps(pipe)
-  s3= boto3.resource('s3')
-  s3.Object(bucket,key).put(Body=pkl_obj)
+
+  with open(f'pkl_files/{key}', 'wb') as f:
+    pkl.dump(pipe, f)
+  
+  with open(f'pkl_files/{key}', 'rb') as g:
+    s3 = session.resource('s3')
+    s3.Object(bucket,key).put(Body=g)
+    # mod = pkl.load(g)
+  # pkl_obj = pkl.dumps(pipe)
+  # s3= boto3.resource('s3')
+  # s3.Object(bucket,key).put(Body=mod)
   return "finished"
+
+
 

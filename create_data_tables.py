@@ -1,4 +1,4 @@
-from sqlalchemy import Column,  String, create_engine, Integer
+from sqlalchemy import Column,  String, create_engine, Integer, text, inspect
 from sqlalchemy.ext.declarative import declarative_base
 import pandas as pd
 Base = declarative_base()
@@ -38,9 +38,11 @@ class VinAuditTable(Base):
 class ModelsScore(Base):
     __tablename__ = 'models_score'
     id = Column(Integer(), primary_key=True)    
-    date = Column(String())
+    path = Column(String())
     test_score = Column(String())
     environment = Column(String())
     
 engine = create_engine("postgresql+psycopg2://codesmith:TensorFlow01?@database-1.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com/postgres")
-print(pd.read_sql_table('cars_final', engine))
+print(pd.read_sql_table('models_score', engine))
+
+
