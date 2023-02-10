@@ -1,4 +1,4 @@
-from sqlalchemy import Column,  String, create_engine, Integer
+from sqlalchemy import Column,  String, create_engine, Integer, text, inspect
 from sqlalchemy.ext.declarative import declarative_base
 import pandas as pd
 Base = declarative_base()
@@ -38,6 +38,9 @@ class VinAuditTable(Base):
 class ModelsScore(Base):
     __tablename__ = 'models_score'
     id = Column(Integer(), primary_key=True)    
-    date = Column(String())
+    path = Column(String())
     test_score = Column(String())
     environment = Column(String())
+    
+
+

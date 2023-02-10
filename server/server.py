@@ -9,7 +9,6 @@ This server contains the following endpoints:
   /predict (POST) - returns the column headers of the file
 """
 import json
-import pickle as pkl
 import pandas as pd
 from sqlalchemy import create_engine
 from flask import Flask, request, jsonify
@@ -17,27 +16,32 @@ import pandas as pd
 import boto3
 import pickle as pkl
 import os
+
+session = boto3.Session(
+    aws_access_key_id = os.environ["ACCESS_KEY"],
+    aws_secret_access_key=os.environ["ACCESS_SECRET"],
+    region_name = os.environ["REGION"]
+)
+
+
 URI = os.environ["URI"]
 
 engine = create_engine(URI)
 
 scores = pd.read_sql_table('models_score', con=engine)
-max_score = scores['score'].idxmax()
-name = scores['path'][max_score]
-print(name)
-# bucket='your_bucket_name'
-# key='your_pickle_filename.pkl'
-# pickle_byte_obj = pickle.dumps([var1, var2, ..., varn]) 
-# s3_resource = boto3.resource('s3')
-# s3_resource.Object(bucket,key).put(Body=pickle_byte_obj)
+max_score = scores['test_score'].astype(float).idxmax()
+name = scores["path"][max_score]
 
-s3 = boto3.resource('s3')
+s3 = session.resource('s3')
 mod = pkl.loads(s3.Bucket("carsalesmodel").Object(f'{name}.pkl').get()['Body'].read())
-# s3_client = boto3.client('s3')
-# s3_response_object = s3_client.get_object(Bucket='carsalesmodel', Key=name)# load from S3 the pickle-serialized pipeline object
-# mod = s3_response_object['Body'].read() # may have to un-pickle
-# mod = pkl.loads(mod)
-# print(object_content)
+
+# cli = boto3.client('s3')
+# resp = cli.get_object(Bucket='carsalesmodel', Key=name)
+# body = resp['Body'].read()
+# with open("/Users/adamgabriellang/Desktop/02-10-202356170c91-3647-4ffa-86f6-18036f5d3f11.pkl", 'rb') as f:
+#     mod = pkl.load(f)
+
+
 app = Flask(__name__)
 
 @app.route('/')
