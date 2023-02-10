@@ -34,5 +34,5 @@ jobs:
         ECR_REPOSITORY: lambdas
         IMAGE_TAG: webscraper_latest
       run: |
-        docker build -t Dockerfile $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker build -f Dockerfile $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
