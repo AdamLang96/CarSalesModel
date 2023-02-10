@@ -41,6 +41,3 @@ class ModelsScore(Base):
     date = Column(String())
     test_score = Column(String())
     environment = Column(String())
-    
-engine = create_engine("postgresql+psycopg2://codesmith:TensorFlow01?@database-1.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com/postgres")
-print(pd.read_sql_table('cars_final', engine))
