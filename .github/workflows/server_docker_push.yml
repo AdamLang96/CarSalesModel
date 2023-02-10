@@ -1,9 +1,12 @@
-name: Deploy server.Dockerfile to ECR
+name: Deploy docker image for server
 
 on:
- 
   push:
     branches: [ main ]
+
+defaults:
+  run:
+    working-directory: server
 
 jobs:
   
@@ -12,7 +15,6 @@ jobs:
     name: Build Image
     runs-on: ubuntu-latest
 
-   
     steps:
 
     - name: Check out code
@@ -35,5 +37,5 @@ jobs:
         ECR_REPOSITORY: classical_project_docker
         IMAGE_TAG: server_latest
       run: |
-        docker build -f server.Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker build -f Dockerfile $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG

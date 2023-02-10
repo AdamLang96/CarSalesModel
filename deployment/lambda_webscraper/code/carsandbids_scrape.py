@@ -1,7 +1,5 @@
 """CarsandBids.com data scraper
-
 This script scrapes data from past auctions off of CarsandBids.com
-
 """
 import re
 import time
@@ -9,9 +7,42 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.service import Service
 
-def scrape_listings(path_to_chrome_driver, page_number, delay_seconds_between_gets):
+CHROMEDRIVER_LOCATION = "/bin/chromedriver"
+CHROME_HEADLESS_LOCATION = "/bin/headless-chromium"
+
+class ChromeDriverWrapper:
+    def __init__(self):
+        options = webdriver.ChromeOptions()
+        options.headless = True
+        options.binary_location = CHROME_HEADLESS_LOCATION
+        options.add_argument("--headless")
+        options.add_argument("window-size=1920x1080")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--no-sandbox")
+        # options.add_argument("start-maximized")
+        # options.add_argument("enable-automation")
+        # options.add_argument("--disable-infobars")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument('--disable-gpu-sandbox')
+        options.add_argument("--single-process")
+        options.add_argument("--disable-extensions") 
+        # options.add_argument('--remote-debugging-port=9222')
+        options.add_argument(
+            '"user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"')
+        self._driver = webdriver.Chrome(options=options, executable_path=CHROMEDRIVER_LOCATION)
+
+    def get_url(self, url):
+        self._driver.get(url)
+
+    def get_title(self):
+        return self._driver.title
+
+    def close(self):
+        self._driver.quit()
+
+
+def scrape_listings(page_number, delay_seconds_between_gets):
     """Scrapes all listings from CarsAndBids.com
     arguments:
         path_to_chrome_driver
@@ -24,11 +55,11 @@ def scrape_listings(path_to_chrome_driver, page_number, delay_seconds_between_ge
         url = f"https://carsandbids.com/past-auctions/?page={page_number}"
     options = webdriver.ChromeOptions()
     options.add_argument('headless')
-    service = Service(path_to_chrome_driver)
-    driver = webdriver.Chrome(service=service, options=options)
+   
+    driver = ChromeDriverWrapper()
     time.sleep(delay_seconds_between_gets)
-    driver.get(url)
-    html_text = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH,
+    driver.get_url(url)
+    html_text = WebDriverWait(driver._driver, 5).until(EC.visibility_of_element_located((By.XPATH,
     "/html/body/div/div[2]/div[2]/div/ul[1]"))).get_attribute("innerHTML")
     html_text = html_text.split(" ")
     href_match = re.compile(".*href=")
@@ -38,22 +69,20 @@ def scrape_listings(path_to_chrome_driver, page_number, delay_seconds_between_ge
     cleaned_urls_list = ["https://carsandbids.com" + s for s in cleaned_urls_list]
     return cleaned_urls_list
 
-def scrape_text_from_listing(url, path_to_chrome_driver):
+def scrape_text_from_listing(url):
     """Scrapes all information from an individual listing on CarsandBids.com"""
-    options = webdriver.ChromeOptions()
-    options.add_argument('headless')
-    service = Service(path_to_chrome_driver)
-    driver = webdriver.Chrome(service=service, options=options)
-    driver.get(url)
-    car_details = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH,
+   
+    driver = ChromeDriverWrapper()
+    driver.get_url(url)
+    car_details = WebDriverWait(driver._driver, 5).until(EC.visibility_of_element_located((By.XPATH,
      "/html/body/div/div[2]/div[5]/div[1]/div[2]"))).get_attribute("innerHTML")
-    selling_price = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH,
+    selling_price = WebDriverWait(driver._driver, 5).until(EC.visibility_of_element_located((By.XPATH,
      "/html/body/div/div[2]/div[3]/div[1]/div/div"))).get_attribute("innerHTML")
-    dougs_notes = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH,
+    dougs_notes = WebDriverWait(driver._driver, 5).until(EC.visibility_of_element_located((By.XPATH,
      "/html/body/div/div[2]/div[5]/div[1]/div[3]/div[1]/div"))).get_attribute("innerHTML")
-    model_year = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH,
+    model_year = WebDriverWait(driver._driver, 5).until(EC.visibility_of_element_located((By.XPATH,
      "/html/body/div/div[2]/div[1]/div/div[1]"))).get_attribute("innerHTML")
-    auction_date= WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH,
+    auction_date= WebDriverWait(driver._driver, 5).until(EC.visibility_of_element_located((By.XPATH,
      "/html/body/div/div[2]/div[5]/div[1]/div[6]/div/ul/li[2]/div[2]"))).get_attribute("innerHTML")
     return car_details, selling_price, dougs_notes, model_year, auction_date
 
