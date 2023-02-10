@@ -149,10 +149,10 @@ def main():
   bucket = 'carsalesmodel'
   key = f'{today}.pkl'
 
-  with open(f'pkl_files/{key}', 'wb') as f:
+  with open(f'/tmp/{key}', 'wb') as f:
     pkl.dump(pipe, f)
   
-  with open(f'pkl_files/{key}', 'rb') as g:
+  with open(f'/tmp/{key}', 'rb') as g:
     s3 = session.resource('s3')
     s3.Object(bucket,key).put(Body=g)
     # mod = pkl.load(g)
