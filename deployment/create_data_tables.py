@@ -1,5 +1,6 @@
 from sqlalchemy import Column,  String, create_engine, Integer
 from sqlalchemy.ext.declarative import declarative_base
+import pandas as pd
 Base = declarative_base()
 
 class CarsAndBidsTable(Base):
@@ -41,4 +42,5 @@ class ModelsScore(Base):
     test_score = Column(String())
     environment = Column(String())
     
-
+engine = create_engine("postgresql+psycopg2://codesmith:TensorFlow01?@database-1.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com/postgres")
+print(pd.read_sql_table('cars_final', engine))

@@ -40,11 +40,8 @@ def main():
             if not len(more_listings):
                 more_listings=False
          
-
-
         except:
             raise ValueError("Failed to access CarsandBids.com")
-
 
         for i in new_listings:
             try:

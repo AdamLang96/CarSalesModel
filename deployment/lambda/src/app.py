@@ -333,7 +333,7 @@ def main():
 
 
         except:
-            raise ValueError("Failed to access CarsandBids.com")
+            warnings.warn("Unable access cars and bids")
 
 
         for i in new_listings:
