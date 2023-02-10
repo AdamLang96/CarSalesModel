@@ -3,11 +3,7 @@ name: Deploy Docker image for webscraping lambda
 on:
   push:
     branches: [ main ]
-
-defaults:
-  run:
-    working-directory: deployment/lambda_webscraper
-
+    
 jobs:
   
   build:
@@ -32,6 +28,7 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v1
 
     - name: Build, tag, and push image to Amazon ECR
+    - working-directory: deployment/lambda_webscraper
       env:
         ECR_REGISTRY: ${{ secrets.ECR_REPO_URI }}
         ECR_REPOSITORY: lambdas
