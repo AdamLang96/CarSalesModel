@@ -1,8 +1,7 @@
 from sqlalchemy import Column,  String, create_engine, Integer, text, inspect
 from sqlalchemy.ext.declarative import declarative_base
-import pandas as pd
 Base = declarative_base()
-
+import pandas as pd
 class CarsAndBidsTable(Base):
     __tablename__ = 'cars_final'
     id = Column(Integer(), primary_key=True) 
@@ -42,5 +41,6 @@ class ModelsScore(Base):
     test_score = Column(String())
     environment = Column(String())
     
-
+con = create_engine("postgresql+psycopg2://postgres:postgres@classical-project.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com/postgres")
+Base.metadata.create_all(con)
 
