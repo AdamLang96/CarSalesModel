@@ -14,11 +14,12 @@ import os
 import boto3
 from datetime import date
 from uuid import uuid4
+import hashlib
 
 session = boto3.Session(
-    aws_access_key_id = os.environ["ACCESS_KEY"],
-    aws_secret_access_key=os.environ["ACCESS_SECRET"],
-    region_name = os.environ["REGION"]
+    aws_access_key_id = "AKIAUH63BSS4PNGLHLFR",
+    aws_secret_access_key="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",
+    region_name = 'us-west-2'
 )
 
 
@@ -27,9 +28,9 @@ def main():
   today = today.strftime("%m-%d-%Y")
   today = str(today) + str(uuid4())
 
-  training_rounds = int(os.environ["TRAINING_ROUNDS"])
-  uri = str(os.environ["URI"])
-  model_env = str(os.environ["ENVIRONMENT"])
+  training_rounds = 1
+  uri = "postgresql+psycopg2://codesmith:TensorFlow01?@database-1.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com/postgres"
+  model_env = "test"
   
 
   engine = create_engine(uri)
@@ -42,11 +43,12 @@ def main():
     id_max = 0
   else:
     id_max = max([id_ for (id_, ) in idx])
+    print(id_max)
 
 
-  sqlstmt_cb = text('''SELECT * FROM "cars_final"
+  sqlstmt_cb = text('''SELECT * FROM "cars_bids_listings"
                 INNER JOIN "vin_newest_final"
-                ON "cars_final"."vin" = "vin_newest_final"."vin"''')
+                ON "cars_bids_listings"."vin" = "vin_audit_data"."vin"''')
 
   full_data = pd.read_sql_query(sqlstmt_cb, con=engine)
   full_data["Date"] = pd.to_datetime(full_data["date"])
@@ -147,19 +149,33 @@ def main():
       conn.execute(sqlstmt_ms, v0=new_id, v1=str(today), v2=test_score, v3=model_env)
 
   bucket = 'carsalesmodel'
-  key = f'{today}.pkl'
-
+  key = 'testuploadmod_indocker_again.pkl'
+  
   with open(f'/tmp/{key}', 'wb') as f:
     pkl.dump(pipe, f)
   
+  hashlib.md5(open(f'/tmp/{key}','rb').read()).hexdigest()
+  print(hashlib.md5(open(f'/tmp/{key}','rb').read()).hexdigest())
   with open(f'/tmp/{key}', 'rb') as g:
     s3 = session.resource('s3')
     s3.Object(bucket,key).put(Body=g)
-    # mod = pkl.load(g)
+  # mod = pkl.load(g)
   # pkl_obj = pkl.dumps(pipe)
   # s3= boto3.resource('s3')
   # s3.Object(bucket,key).put(Body=mod)
   return "finished"
+
+  # with open("/Users/adamgabriellang/DSML/CarSalesModel/server/thismod.pkl", 'rb') as f:
+    
+  # s3 = session.resource('s3')
+  # s3.meta.client.upload_file(Filename='thismod.pkl', Bucket=bucket, Key=key)
+  # return True
+
+  # mod = pkl.load(g)
+  # pkl_obj = pkl.dumps(pipe)
+  # s3= boto3.resource('s3')
+  # s3.Object(bucket,key).put(Body=mod)
+  # return "finished"
 
 
 
