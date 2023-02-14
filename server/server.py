@@ -16,6 +16,7 @@ import pandas as pd
 import boto3
 import pickle as pkl
 import os
+import shap
 
 session = boto3.Session(
     aws_access_key_id = os.environ["ACCESS_KEY"],
@@ -61,7 +62,7 @@ def predict():
 
 
 @app.route("/predict_streamlit", methods=['POST'])
-def predict():
+def predict_streamlit():
     """Receives car metadata, feeds into trained model, returns prediction as JSON
     Receives data (JSON) in the following structure:
     key : value
@@ -78,8 +79,12 @@ def predict():
     del data['tree_model']
     data = pd.DataFrame(data, index = [0])
     mod = pkl.loads(s3.Bucket("carsalesmodel").Object(f'{model_name}').get()['Body'].read())
+    shap_data = mod['columntransformer'].fit_transform(data)
+    exp = shap.TreeExplainer(mod['gradientboostingregressor'], shap_data)
+    exp =  exp.shap_values(shap_data)
+    print(exp)
     preds = mod.predict(data)
-    return jsonify(list(preds))
+    return jsonify(list(preds, exp))
 
 if __name__ == '__main__':
     app.run()
