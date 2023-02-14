@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 import pandas as pd
 class CarsAndBidsTable(Base):
-    __tablename__ = 'cars_final'
+    __tablename__ = 'cars_bids_listings'
     id = Column(Integer(), primary_key=True) 
     make  = Column(String())
     model  = Column(String())
@@ -42,5 +42,6 @@ class ModelsScore(Base):
     environment = Column(String())
     
 con = create_engine("postgresql+psycopg2://postgres:postgres@classical-project.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com/postgres")
-Base.metadata.create_all(con)
+print(pd.read_sql_table('cars_bids_listings', con))
+# Base.metadata.create_all(con)
 

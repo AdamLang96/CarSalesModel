@@ -19,8 +19,7 @@ import hashlib
 session = boto3.Session(
     aws_access_key_id = "AKIAUH63BSS4PNGLHLFR",
     aws_secret_access_key="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",
-    region_name = 'us-west-2'
-)
+    region_name = 'us-west-2')
 
 
 def main():
@@ -47,7 +46,7 @@ def main():
 
 
   sqlstmt_cb = text('''SELECT * FROM "cars_bids_listings"
-                INNER JOIN "vin_newest_final"
+                INNER JOIN "vin_audit_data"
                 ON "cars_bids_listings"."vin" = "vin_audit_data"."vin"''')
 
   full_data = pd.read_sql_query(sqlstmt_cb, con=engine)

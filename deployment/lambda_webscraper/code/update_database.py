@@ -11,9 +11,9 @@ def main():
     URI = os.environ["URI"]
     engine = create_engine(URI)
 
-    PULL_URLS= text('SELECT "url" FROM "cars_final"')
-    PULL_INDEX_CB= text('SELECT "id" FROM "cars_final"')
-    PULL_INDEX_VIN_AUDIT= text('SELECT "id" FROM "vin_newest_final"')
+    PULL_URLS= text('SELECT "url" FROM "cars_bids_listings"')
+    PULL_INDEX_CB= text('SELECT "id" FROM "cars_bids_listings"')
+    PULL_INDEX_VIN_AUDIT= text('SELECT "id" FROM "vin_audit_data"')
 
     with engine.connect() as connection:
         urls = connection.execute(PULL_URLS).fetchall()
@@ -59,7 +59,7 @@ def main():
                 except:
                     warnings.warn(f"Unable to pull data from VinAudit API for VIN {vin}")
                     
-                car_bids_sql_stmt = text('''INSERT INTO "cars_final"
+                car_bids_sql_stmt = text('''INSERT INTO "cars_bids_listings"
                                             VALUES (:v0, :v1, :v2, :v3, :v4,
                                                     :v5, :v6, :v7, :v8, :v9, :v10, 
                                                     :v11, :v12, :v13, :v14, :v15, 
@@ -94,7 +94,7 @@ def main():
                 except:
                     warnings.warn("Unable add data to carsandbidsdata")
                 
-                vin_audit_sql_stmt = text('''INSERT INTO "vin_newest_final" 
+                vin_audit_sql_stmt = text('''INSERT INTO "vin_audit_data" 
                                             VALUES (:v0, :v1, :v2, :v3, :v4, :v5)''')
                 print('insert to vin_newest_final complete')
                 try:
