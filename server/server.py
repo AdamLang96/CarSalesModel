@@ -26,7 +26,6 @@ session = boto3.Session(
 
 s3 = session.resource('s3')
 URI = os.environ["URI"]
-
 engine = create_engine(URI)
 
 # scores = pd.read_sql_table('models_score', con=engine)
@@ -34,8 +33,6 @@ engine = create_engine(URI)
 # name = scores["path"][max_score]
 
 mod_api = pkl.loads(s3.Bucket("carsalesmodel").Object('thismod.pkl').get()['Body'].read())
-
-
 
 app = Flask(__name__)
 
