@@ -3,18 +3,17 @@
 This script allows the user to make predictions on sales prices for cars on CarsAndBids.
 
 """
-import datetime
+from datetime import date
 import pickle
 import requests as rq
 import plotly.express as px
 import streamlit as st
 import pandas as pd
 import yfinance as yf
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 import os
 import boto3
 from streamlit_option_menu import option_menu
-# from vin_api import get_vin_info
 
 session = boto3.Session(
     aws_access_key_id = "AKIAUH63BSS4PNGLHLFR",
@@ -22,16 +21,35 @@ session = boto3.Session(
     region_name = 'us-west-2'
 )
 
+@st.cache_data(ttl=259200, max_entries=None)
+def get_vin_info(vin, api_key = 'VA_DEMO_KEY', num_days = 90, mileage = 'average'):
+    """pulls data from vinaudit api """
+    vinaudit_url = f'https://marketvalue.vinaudit.com/getmarketvalue.php?key={api_key}&vin={vin}&format=json&period={num_days}&mileage={mileage}'
+    req = rq.get(url = vinaudit_url)
+    data = req.json()
+    return data
 
-name = 'thismod'
+
+@st.cache_data(ttl=259200, max_entries=None)
+def fetch_market_data():
+    sp500 = yf.download("^GSPC", start= '2023-2-1', end=str(date.today())) 
+    sp500 = pd.DataFrame(sp500)
+    sp500 = sp500["Adj Close"].iloc[0]
+    return sp500
+
+# name = 'thismod'
 s3 = session.resource('s3')
-mod = pickle.loads(s3.Bucket("carsalesmodel").Object(f'{name}.pkl').get()['Body'].read())
+model_list = []
+for i in s3.Bucket('carsalesmodel').objects.all():
+    model_list.append(i.key)
+    
+# mod = pickle.loads(s3.Bucket("carsalesmodel").Object(f'{name}.pkl').get()['Body'].read())
 
 # URI = os.environ["URI"]
 
 engine = create_engine('postgresql+psycopg2://postgres:postgres@classical-project.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com/postgres')
 
-URL = 'http://127.0.0.1:8080/predict'
+URL = 'http://127.0.0.1:5000/predict_streamlit'
 
 MODEL_SQL_QUERY = 'SELECT DISTINCT "model" FROM "cars_bids_listings";'
 MAKE_SQL_QUERY = 'SELECT DISTINCT "make" FROM "cars_bids_listings";'
@@ -44,11 +62,10 @@ SOLDTYPE_SQL_QUERY = 'SELECT DISTINCT "soldtype" FROM "cars_bids_listings";'
 YNRESERVE_SQL_QUERY = 'SELECT DISTINCT "y_n_reserve" FROM "cars_bids_listings";'
 VIN_SQL_QUERY = 'SELECT "vin" FROM "cars_bids_listings" LIMIT 1;'
 
-
 with engine.connect() as connection:
-    make_df = pd.read_sql_query(MAKE_SQL_QUERY, con = connection)
-    model_df = pd.read_sql_query(MODEL_SQL_QUERY, con = connection)
-    engine_df = pd.read_sql_query(ENGINE_SQL_QUERY, con = connection)
+    make_df = pd.read_sql_query(text(MAKE_SQL_QUERY), con = connection)
+    model_df = pd.read_sql_query(text(MODEL_SQL_QUERY), con = connection)
+    engine_df = pd.read_sql_query(text(ENGINE_SQL_QUERY), con = connection)
     title_status_df = pd.read_sql_query(TITLE_STATUS_SQL_QUERY, con = connection)
     drive_train_df = pd.read_sql_query(DRIVE_TRAIN_SQL_QUERY, con = connection)
     transmission_df = pd.read_sql_query(TRANSMISSION_SQL_QUERY, con = connection)
@@ -56,126 +73,84 @@ with engine.connect() as connection:
     soldType_df = pd.read_sql_query(SOLDTYPE_SQL_QUERY, con = connection)
     reserve_df = pd.read_sql_query(YNRESERVE_SQL_QUERY, con = connection)
     vin = pd.read_sql_query(VIN_SQL_QUERY, con = connection)
+    
 st.set_page_config(layout="wide", page_title="Car Sale Value")
 headercol1, headercol2 = st.columns(2)
 with st.container():
     with headercol1:
         st.markdown("<h1 style='text-align: center; color: black;'>How Much is Your Collector Car Worth?</h1>", unsafe_allow_html=True)
-        st.text('''Commodo nulla facilisi nullam vehicula. Risus feugiat in ante metus dictum at tempor commodo ullamcorper.\nBlandit cursus risus at ultrices.\nTurpis in eu mi bibendum neque.\nEu mi bibendum neque egestas congue quisque egestas diam. Fermentum leo vel orci porta non pulvinar.Porttitor rhoncus dolor purus non enim praesent elementum\nQuam lacus suspendisse faucibus interdum posuere lorem.\nDonec massa sapien faucibus et molestie ac feugiat sed lectus. Consequat ac felis donec et odio pellentesque diam volutpat. Mauris cursus mattis molestie a iaculis at erat.\nQuam vulputate dignissim suspendisse in est ante in nibh. Sed enim ut sem viverra.''')
+        st.subheader('Use our API and predict a sale price for your vehicle!')
     with headercol2:
         st.image('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTe1SBdlXWtJ96-zcUnN05YMaumzpJ-q2ei-A&usqp=CAU', width=500)
-selected_navbar = option_menu(None, ["Home", "Predict", "FAQ", 'About', 'Model', 'API'], orientation="horizontal")
+selected_navbar = option_menu(None, ["Predict", "FAQ", "API"], orientation="horizontal")
 
     
-col1, col2, col3, col4 = st.columns(4)
 dataset = st.container()
 model = st.container()
 years = range(1980, 2023)
 chart = st.container()
 
-if selected_navbar == "Home":
-    st.text('''             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Amet consectetur adipiscing elit duis tristique sollicitudin nibh. Nulla facilisi cras fermentum odio eu. 
-                Imperdiet dui accumsan sit amet. Nullam non nisi est sit amet facilisis. 
-                Nulla facilisi nullam vehicula ipsum a arcu cursus vitae congue. Praesent elementum facilisis leo vel fringilla. Quis hendrerit dolor magna eget est lorem ipsum. Sollicitudin nibh sit amet commodo nulla facilisi. 
-                Cursus risus at ultrices mi. Adipiscing vitae proin sagittis nisl rhoncus mattis rhoncus urna neque. Eros donec ac odio tempor. 
-                Urna condimentum mattis pellentesque id nibh tortor id. Adipiscing vitae proin sagittis nisl rhoncus mattis rhoncus urna neque. Molestie at elementum eu facilisis sed odio morbi quis. Eleifend mi in nulla posuere sollicitudin aliquam ultrices sagittis orci. Placerat orci nulla pellentesque dignissim.
-            
-            Sed ullamcorper morbi tincidunt ornare. Eget aliquet nibh praesent tristique magna. 
-                Sem viverra aliquet eget sit amet. Sodales neque sodales ut etiam sit amet nisl. 
-                Lobortis mattis aliquam faucibus purus in massa. Pharetra magna ac placerat vestibulum lectus mauris ultrices. 
-                Commodo nulla facilisi nullam vehicula. Risus feugiat in ante metus dictum at tempor commodo ullamcorper. 
-                Blandit cursus risus at ultrices. Turpis in eu mi bibendum neque. Eu mi bibendum neque egestas congue quisque egestas diam. 
-                Fermentum leo vel orci porta non pulvinar. Porttitor rhoncus dolor purus non enim praesent elementum. Quam lacus suspendisse faucibus interdum posuere lorem. 
-                Donec massa sapien faucibus et molestie ac feugiat sed lectus. Consequat ac felis donec et odio pellentesque diam volutpat. Mauris cursus mattis molestie a iaculis at erat. Quam vulputate dignissim suspendisse in est ante in nibh. Sed enim ut sem viverra.
-            
-            Enim blandit volutpat maecenas volutpat blandit aliquam etiam erat. 
-                Turpis egestas maecenas pharetra convallis posuere. 
-                Nibh nisl condimentum id venenatis. Eget nunc scelerisque viverra mauris in. 
-                Quis eleifend quam adipiscing vitae proin sagittis nisl. 
-                Sit amet venenatis urna cursus eget nunc scelerisque viverra. 
-                Risus in hendrerit gravida rutrum. Enim neque volutpat ac tincidunt vitae semper quis lectus nulla. 
-                Aliquet lectus proin nibh nisl condimentum. Fames ac turpis egestas maecenas pharetra convallis posuere. 
-                Gravida cum sociis natoque penatibus et magnis dis parturient montes. 
-                Volutpat sed cras ornare arcu dui vivamus.
-            
-            Eu volutpat odio facilisis mauris sit amet massa. 
-                Ipsum dolor sit amet consectetur adipiscing elit pellentesque habitant morbi. 
-                Eleifend donec pretium vulputate sapien. Malesuada bibendum arcu vitae elementum curabitur vitae nunc sed.
-            
-            Convallis aenean et tortor at risus. Et ultrices neque ornare aenean euismod. 
-                Eu ultrices vitae auctor eu augue ut lectus. Gravida arcu ac tortor dignissim convallis aenean et tortor at. 
-                Mattis enim ut tellus elementum sagittis vitae et. Amet mauris commodo quis imperdiet. Dolor purus non enim praesent elementum.
-                Maecenas accumsan lacus vel facilisis volutpat est. Sit amet mauris commodo quis imperdiet. Ornare massa eget egestas purus. 
-                Sit amet luctus venenatis lectus magna fringilla urna. Tristique senectus et netus et malesuada fames ac turpis. 
-                Tempor orci dapibus ultrices in iaculis nunc sed augue. Urna porttitor rhoncus dolor purus non enim praesent. 
-                Aliquet nec ullamcorper sit amet risus nullam eget felis.
-            
-            Orci eu lobortis elementum nibh tellus. Quis lectus nulla at volutpat diam ut venenatis tellus in. 
-                Morbi quis commodo odio aenean sed adipiscing diam donec adipiscing. Et egestas quis ipsum suspendisse. 
-                Diam phasellus vestibulum lorem sed risus. Fringilla urna porttitor rhoncus dolor. Diam volutpat commodo sed egestas egestas fringilla phasellus. 
-                Scelerisque in dictum non consectetur. In arcu cursus euismod quis viverra nibh cras pulvinar mattis. 
-                Velit dignissim sodales ut eu. Ac auctor augue mauris augue neque gravida. Cursus vitae congue mauris rhoncus. 
-                A scelerisque purus semper eget duis at tellus.''')
                 
 if selected_navbar == "FAQ":
     with st.container():
-        with st.expander("Question One"):
-            st.write('answer one')
-        with st.expander("Question Two"):
-            st.write('answer two')
-        with st.expander("Question Three"):
-            st.write('answer three')
-        with st.expander("Question Three"):
-            st.write('answer three')
-        with st.expander("Question Four"):
-            st.write('answer three')
+        with st.expander("What is Cars and Bids?"):
+            st.write('Cars and Bids is an online enthusiast car sales platform created by the automotive Youtuber Doug DeMuro. Most listings on the platform are sold in auction format.')
+        with st.expander("What model are you guys using?"):
+            st.write('Tree based model')
+        with st.expander("How was the data collected?"):
+            st.write('Sold listings are scraped from the website using selenium.')
+        with st.expander("How accurate are the predictions?"):
+            st.write('MSE of roughly 0.75')
+        with st.expander("Can I use this site commercially?"):
+            st.write('No.')
+        with st.expander("Is the car price prediction sound financial advice?"):
+            st.write('No. This is a purely academic exercise; use the model output at your own discretion')
 
 if selected_navbar == "Predict":
-    sp500 = 4147
-    with dataset:
-        with st.container():
-                with col1:
-                    make_option = st.selectbox('Make', make_df)
-                    model_option = st.selectbox('Model', model_df)
-                    year_option = st.selectbox("Year", years)
-                with col2:
-                    engine_option = st.selectbox('Engine', engine_df)
-                    title_option = st.selectbox('Title', title_status_df)
-                    drive_option = st.selectbox('Drive', drive_train_df)
-                with col3:
-                    bodyStyle_option = st.selectbox('Body Style', bodyStyle_df)
-                    reserve_option = st.selectbox('Reserve', reserve_df)
-                    transmission_option = st.selectbox('Transmission', transmission_df)
-                with col4:
-                    vin_option = st.text_input('Vin')
-                    mileage_option = st.text_input('Mileage')
-                button = st.button("Submit", use_container_width=True)
+    with st.container():
+        st.text('CarsAndBids.com is a new auction website for collector cars from the 80s until now. With a rich history of auctions, we wanted to learn if we could predict\nwhich cars would be good deals on the site by using features of the vehicle like Make, Model, Year, Engine (etc.) as well as car market data on the vehicle\nand general market data, we fit a gradient boosted decision tree to predict the selling price of the car. To determine whether its a good deal, we compare the\npredicted sale price against the market average for similar vehicles. Car market data comes from the VinAudit API\n')
+        form = st.form(key='uinput')
+    with form:
+        form_columns = st.columns(4)
+        text_arr = [['Make', 'Model', 'Year'], ['Engine', 'Title', 'Drive'], ['Body Style', 'Reserve', 'Transmission'], ['Vin', 'Mileage']]
+        options_arr = [[make_df, model_df, years], [engine_df, title_status_df, drive_train_df], [bodyStyle_df, reserve_df, transmission_df]]
+        columns = []
+        for i, col in enumerate(form_columns):
+            if i < 3:
+                for j in range(len(text_arr[i])):
+                    newcol = col.selectbox(text_arr[i][j], options_arr[i][j], key=(i*3)+j)
+                    columns.append(newcol)
+            else:
+                for j in range(len(text_arr[i])):
+                    newcol = col.text_input(text_arr[i][j], key=(i*3)+j)
+                    columns.append(newcol)
+                newcol = col.selectbox('Model', model_list, key=(i*3)+j+1)
+                columns.append(newcol)
+                
+        sp500 = fetch_market_data()
+        button = st.form_submit_button(label="Submit", use_container_width=True)
         
         if button:
-            mean = '5000'
-            std = '120'
-            count_over_days = '12'
-            newres= rq.post(URL, json={"rows": [{   "make": make_option,
-                                                    "model": model_option,
-                                                    "mileage": mileage_option,
-                                                    "status": title_option , 
-                                                    "engine":engine_option,
-                                                    "drivetrain": drive_option,
-                                                    "transmission" :transmission_option,
-                                                    "bodystyle": bodyStyle_option,
-                                                    "y_n_reserve":reserve_option,
-                                                    "year":year_option,
-                                                    'market_value_mean': "20000", 
-                                                    'market_value_std':'400', 
-                                                    'count_over_days':"10", 
-                                                    'Adj Close':'4000'}]})
-            rq.get('http://marketvalue.vinaudit.com/getmarketvalue.php?key=VA_DEMO_KEY&vin=JM1NA3533S0611425&format=json&period=90&mileage=average')
-            # print(vin)
-            print('complete')
+            # req = get_vin_info(columns[9])
+            req = {"mean":20000, 'stdev':123, 'count':123}
+            newres= rq.post(URL, json={"rows": [{   "make": columns[0],
+                                                    "model": columns[1],
+                                                    "mileage": columns[10],
+                                                    "status": columns[4], 
+                                                    "engine":columns[3],
+                                                    "drivetrain": columns[5],
+                                                    "transmission" :columns[8],
+                                                    "bodystyle": columns[6],
+                                                    "y_n_reserve":columns[7],
+                                                    "year":columns[2],
+                                                    'market_value_mean': req["mean"], 
+                                                    'market_value_std':req['stdev'], 
+                                                    'count_over_days':str(float(req['count']) / 90), 
+                                                    'Adj Close':sp500,
+                                                    'tree_model': columns[11]}]})
             newres = newres.json()
             newres = newres[0]
-            mean = 50
-            if newres >= float(mean):
+            if newres >= float(req["mean"]):
                 SELLSTRING = "recommended"
             else:
                 SELLSTRING = 'not recommended'
@@ -216,14 +191,14 @@ if selected_navbar == "API":
                 st.write('Vin # on car')
          
 
-if selected_navbar == "Model":
-        with model:
-            st.header('Training Loss')
-        with chart:
-                graph = mod
-                y = (graph[1].train_score_ / max(graph[1].train_score_ ))
-                x = range(0, graph[1].train_score_.shape[0])
-                plt = px.scatter(x=x, y=y, labels=dict(x="N_estimators", y="Loss (%)"))
-                st.plotly_chart(plt)
+# if selected_navbar == "Model":
+#         with model:
+#             st.header('Training Loss')
+#         with chart:
+#                 graph = mod
+#                 y = (graph[1].train_score_ / max(graph[1].train_score_ ))
+#                 x = range(0, graph[1].train_score_.shape[0])
+#                 plt = px.scatter(x=x, y=y, labels=dict(x="N_estimators", y="Loss (%)"))
+#                 st.plotly_chart(plt)
 
 st.write("Developed by Adam Lang and David Kim [Github Repo]('https://github.com/CodeSmithDSMLProjects/CarSalesModel')")
