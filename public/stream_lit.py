@@ -14,7 +14,7 @@ from sqlalchemy import create_engine, text
 import os
 import boto3
 from streamlit_option_menu import option_menu
-
+import altair as alt
 session = boto3.Session(
     aws_access_key_id = "AKIAUH63BSS4PNGLHLFR",
     aws_secret_access_key="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",
@@ -50,7 +50,8 @@ mod = pickle.loads(s3.Bucket("carsalesmodel").Object(f'{name}.pkl').get()['Body'
 
 engine = create_engine('postgresql+psycopg2://postgres:postgres@classical-project.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com/postgres')
 
-URL = 'http://collectorcarpricing.com:8080/predict_streamlit'
+# URL = 'http://collectorcarpricing.com:8080/predict_streamlit'
+URL = 'http://127.0.0.1:8080/predict_streamlit'
 
 MODEL_SQL_QUERY = 'SELECT DISTINCT "model" FROM "cars_bids_listings";'
 MAKE_SQL_QUERY = 'SELECT DISTINCT "make" FROM "cars_bids_listings";'
@@ -133,7 +134,10 @@ if selected_navbar == "Predict":
         
         if button:
             # req = get_vin_info(columns[9])
-            req = {"mean":20000, 'stdev':123, 'count':123}
+            req = {"mean":200000, 'stdev':1230, 'count':1230}
+            
+            
+            
             newres= rq.post(URL, json={"rows": [{   "make": columns[0],
                                                     "model": columns[1],
                                                     "mileage": columns[10],
@@ -150,9 +154,19 @@ if selected_navbar == "Predict":
                                                     'Adj Close':sp500,
                                                     'tree_model': columns[11]}]})
             response = newres.json()
-            newres = response[0]
-            # shaps = response[1]
-            # st.write(shaps)
+            newres = response[0][0]
+            shaps = pd.DataFrame(pd.Series(response[1]))
+            shaps = pd.melt(shaps.reset_index(), id_vars=["index"])
+            print(shaps)
+            chart = (
+                alt.Chart(shaps)
+                .mark_bar()
+                .encode(
+                x=alt.X("value", type="quantitative", title=""),
+                y=alt.Y("index", type="nominal", title=""),
+                color=alt.Color("variable", type="nominal", title=""),
+                order=alt.Order("variable", sort="descending")))
+            st.altair_chart(chart, use_container_width=True)
             if newres >= float(req["mean"]):
                 SELLSTRING = "recommended"
             else:
