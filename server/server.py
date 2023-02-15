@@ -139,7 +139,6 @@ def predict_streamlit():
         feature_dict[name] = feature_sum
         feature_sum = 0        
     preds = list(mod.predict(data))
-    print(list([preds, feature_dict]))
     return jsonify(list([preds, feature_dict]))
 
 if __name__ == '__main__':

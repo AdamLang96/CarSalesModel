@@ -134,7 +134,7 @@ if selected_navbar == "Predict":
         
         if button:
             req = get_vin_info(columns[9])
-            req = {"mean":200000, 'stdev':1230, 'count':1230}
+            # req = {"mean":200000, 'stdev':1230, 'count':1230}
             
             
             
