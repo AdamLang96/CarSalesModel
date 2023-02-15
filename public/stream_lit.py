@@ -50,9 +50,7 @@ mod = pickle.loads(s3.Bucket("carsalesmodel").Object(f'{name}.pkl').get()['Body'
 
 engine = create_engine('postgresql+psycopg2://postgres:postgres@classical-project.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com/postgres')
 
-# URL = 'http://ec2-52-24-15-52.us-west-2.compute.amazonaws.com:8080/predict_streamlit'
-URL = 'http://127.0.0.1:5000/predict_streamlit'
-
+URL = 'http://collectorcarpricing.com:8080/predict_streamlit'
 
 MODEL_SQL_QUERY = 'SELECT DISTINCT "model" FROM "cars_bids_listings";'
 MAKE_SQL_QUERY = 'SELECT DISTINCT "make" FROM "cars_bids_listings";'
@@ -153,8 +151,8 @@ if selected_navbar == "Predict":
                                                     'tree_model': columns[11]}]})
             response = newres.json()
             newres = response[0]
-            shaps = response[1]
-            st.write(shaps)
+            # shaps = response[1]
+            # st.write(shaps)
             if newres >= float(req["mean"]):
                 SELLSTRING = "recommended"
             else:
@@ -164,7 +162,7 @@ if selected_navbar == "Predict":
 
 api_column1, api_column2, api_column3 = st.columns(3)          
 if selected_navbar == "API":
-        st.title("Our API is free to use and available at collectorcarpricing.com/predict")
+        st.title("Our API is free to use and available at http://collectorcarpricing.com:8080/predict")
         st.text('''Our API requires you send a JSON object with the key 'rows' 
         and a correspond array of dictionaries with the following keys''')
         with api_column1:

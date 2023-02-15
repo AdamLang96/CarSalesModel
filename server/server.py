@@ -16,6 +16,7 @@ import pandas as pd
 import boto3
 import pickle as pkl
 import os
+from sklearn.compose import ColumnTransformer
 import shap
 
 session = boto3.Session(
@@ -72,16 +73,18 @@ def predict_streamlit():
     data = data.decode('UTF-8')
     data = json.loads(data)
     data = data['rows'][0]
+    data_dict = data
     model_name = data['tree_model']
     del data['tree_model']
     data = pd.DataFrame(data, index = [0])
     mod = pkl.loads(s3.Bucket("carsalesmodel").Object(f'{model_name}').get()['Body'].read())
-    shap_data = mod['columntransformer'].fit_transform(data)
-    exp = shap.TreeExplainer(mod['gradientboostingregressor'], shap_data)
-    exp =  exp.shap_values(shap_data)
-    print(exp)
+    print(mod[:-1].get_feature_names_out(input_features=data_dict.keys()))
+    shap_data = mod['columntransformer']
+    shap_data_prediction = shap_data.transform(data).toarray()
+    shap_exp = pkl.loads(s3.Bucket("shap-explainers").Object(f'{model_name}').get()['Body'].read())
+    shap_exp =  shap_exp.shap_values(shap_data_prediction)
     preds = mod.predict(data)
-    return jsonify(list(preds, exp))
+    return jsonify(list(preds, shap_exp))
 
 if __name__ == '__main__':
     app.run()
