@@ -133,7 +133,7 @@ if selected_navbar == "Predict":
         button = st.form_submit_button(label="Submit", use_container_width=True)
         
         if button:
-            # req = get_vin_info(columns[9])
+            req = get_vin_info(columns[9])
             req = {"mean":200000, 'stdev':1230, 'count':1230}
             
             
