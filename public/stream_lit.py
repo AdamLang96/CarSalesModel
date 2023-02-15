@@ -50,8 +50,7 @@ mod = pickle.loads(s3.Bucket("carsalesmodel").Object(f'{name}.pkl').get()['Body'
 
 engine = create_engine('postgresql+psycopg2://postgres:postgres@classical-project.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com/postgres')
 
-# URL = 'http://collectorcarpricing.com:8080/predict_streamlit'
-URL = 'http://127.0.0.1:8080/predict_streamlit'
+URL = 'http://collectorcarpricing.com:8080/predict_streamlit'
 
 MODEL_SQL_QUERY = 'SELECT DISTINCT "model" FROM "cars_bids_listings";'
 MAKE_SQL_QUERY = 'SELECT DISTINCT "make" FROM "cars_bids_listings";'
