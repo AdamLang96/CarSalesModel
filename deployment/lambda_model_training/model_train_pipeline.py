@@ -14,8 +14,7 @@ import os
 import boto3
 from datetime import date
 from uuid import uuid4
-import hashlib
-
+import shap
 session = boto3.Session(
     aws_access_key_id = "AKIAUH63BSS4PNGLHLFR",
     aws_secret_access_key="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",
@@ -28,7 +27,7 @@ def main():
   today = str(today) + str(uuid4())
 
   training_rounds = 1
-  uri = "postgresql+psycopg2://codesmith:TensorFlow01?@database-1.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com/postgres"
+  uri = "postgresql+psycopg2://postgres:postgres@classical-project.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com/postgres"
   model_env = "test"
   
 
@@ -115,7 +114,7 @@ def main():
   X_tr, X_tst, y_tr, y_tst = train_test_split(X, y, train_size= .8)
   X_tr, X_val, y_tr, y_val = train_test_split(X_tr, y_tr, test_size=.25)
 
-  learning_rates = np.random.rand(training_rounds, 1)
+  learning_rates = np.random.rand(training_rounds)
   max_depth      = np.random.randint(3, 10, training_rounds)
   n_estimators   = np.random.uniform(100, 5000, training_rounds)
   scoring_data = []
@@ -124,7 +123,7 @@ def main():
       pipe = make_pipeline(preprocessor, model)
       pipe.fit(X_tr, y_tr)
       val_score = pipe.score(X_val, y_val)
-      val_score = {"learning_rate":round(learning_rates[i][0], 3), "max_depth":int(max_depth[i]), "n_estimators":int(n_estimators[i]), "score": val_score}
+      val_score = {"learning_rate":round(learning_rates[i], 3), "max_depth":int(max_depth[i]), "n_estimators":int(n_estimators[i]), "score": val_score}
       scoring_data.append(val_score)
   scoring_data = pd.DataFrame(scoring_data)
   max_score_idx = scoring_data["score"].idxmax()
@@ -146,35 +145,24 @@ def main():
       sqlstmt_ms = text('''INSERT INTO models_score
                           VALUES (:v0, :v1, :v2, :v3)''')
       conn.execute(sqlstmt_ms, v0=new_id, v1=str(today), v2=test_score, v3=model_env)
+  shap_data = pipe['columntransformer']
+  shap_test_data= shap_data.transform(X_tr).toarray()
+  exp = shap.TreeExplainer(pipe['gradientboostingregressor'], shap_test_data)
 
   bucket = 'carsalesmodel'
-  key = 'testuploadmod_indocker_again.pkl'
+  shap_bucket = 'shap-explainers'
+  key = f'{today}.pkl'
   
   with open(f'/tmp/{key}', 'wb') as f:
     pkl.dump(pipe, f)
-  
-  hashlib.md5(open(f'/tmp/{key}','rb').read()).hexdigest()
-  print(hashlib.md5(open(f'/tmp/{key}','rb').read()).hexdigest())
-  with open(f'/tmp/{key}', 'rb') as g:
-    s3 = session.resource('s3')
-    s3.Object(bucket,key).put(Body=g)
-  # mod = pkl.load(g)
-  # pkl_obj = pkl.dumps(pipe)
-  # s3= boto3.resource('s3')
-  # s3.Object(bucket,key).put(Body=mod)
+  with open(f'/tmp/shap_{key}', 'wb') as g:
+    pkl.dump(exp, g)
+
+  s3 = session.resource('s3')
+  s3.meta.client.upload_file(Filename=f'/tmp/{key}', Bucket=bucket, Key=key)
+  s3.meta.client.upload_file(Filename=f'/tmp/shap_{key}', Bucket=shap_bucket, Key=key)
+
   return "finished"
-
-  # with open("/Users/adamgabriellang/DSML/CarSalesModel/server/thismod.pkl", 'rb') as f:
-    
-  # s3 = session.resource('s3')
-  # s3.meta.client.upload_file(Filename='thismod.pkl', Bucket=bucket, Key=key)
-  # return True
-
-  # mod = pkl.load(g)
-  # pkl_obj = pkl.dumps(pipe)
-  # s3= boto3.resource('s3')
-  # s3.Object(bucket,key).put(Body=mod)
-  # return "finished"
 
 
 

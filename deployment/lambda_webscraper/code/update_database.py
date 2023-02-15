@@ -6,7 +6,6 @@ from carsandbids_scrape import scrape_listings
 from carsandbids_scrape import pull_data_from_listing_text, scrape_text_from_listing
 from vin_api import process_vin_audit_data
 
-
 def main():
     URI = os.environ["URI"]
     engine = create_engine(URI)
