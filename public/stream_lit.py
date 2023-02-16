@@ -15,11 +15,6 @@ import os
 import boto3
 from streamlit_option_menu import option_menu
 import altair as alt
-# session = boto3.Session(
-#     aws_access_key_id = "AKIAUH63BSS4PNGLHLFR",
-#     aws_secret_access_key="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",
-#     region_name = 'us-west-2'
-# )
 
 session = boto3.Session(
     aws_access_key_id = os.environ["ACCESS_KEY"],
