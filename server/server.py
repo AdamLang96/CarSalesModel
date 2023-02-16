@@ -64,11 +64,11 @@ s3 = session.resource('s3')
 URI = os.environ["URI"]
 engine = create_engine(URI)
 
-# scores = pd.read_sql_table('models_score', con=engine)
-# max_score = scores['test_score'].astype(float).idxmax()
-# name = scores["path"][max_score]
+scores = pd.read_sql_table('models_score', con=engine)
+max_score = scores['test_score'].astype(float).idxmax()
+name = scores["path"][max_score]
 
-mod_api = pkl.loads(s3.Bucket("carsalesmodel").Object('thismod.pkl').get()['Body'].read())
+mod_api = pkl.loads(s3.Bucket("carsalesmodel").Object(f'{name}.pkl').get()['Body'].read())
 
 app = Flask(__name__)
 
