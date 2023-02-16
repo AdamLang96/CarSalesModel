@@ -16,11 +16,14 @@ import boto3
 from streamlit_option_menu import option_menu
 import altair as alt
 
+
 session = boto3.Session(
-    aws_access_key_id = os.environ["ACCESS_KEY"],
-    aws_secret_access_key=os.environ["ACCESS_SECRET"],
-    region = os.environ["REGION"],
+    aws_access_key_id = 'AKIAUH63BSS4PNGLHLFR',
+    aws_secret_access_key='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',
+    region_name = 'us-west-2'
 )
+
+
 
 @st.cache_data(ttl=259200, max_entries=None)
 def get_vin_info(vin, api_key = 'VA_DEMO_KEY', num_days = 90, mileage = 'average'):
@@ -44,10 +47,12 @@ model_list = []
 for i in s3.Bucket('carsalesmodel').objects.all():
     model_list.append(i.key)
  
-DATA_URI = os.environ["DATA_URI"]
+# DATA_URI = os.environ["DATA_URI"]
+DATA_URI='postgresql+psycopg2://postgres:postgres@classical-project.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com/postgres'
 engine = create_engine(DATA_URI)
 
-SERVER_URI = os.environ["SERVER_URI"]
+# SERVER_URI = os.environ["SERVER_URI"]
+SERVER_URI='http://collectorcarpricing.com:8080/predict_streamlit'
 
 MODEL_SQL_QUERY = 'SELECT DISTINCT "model" FROM "cars_bids_listings";'
 MAKE_SQL_QUERY = 'SELECT DISTINCT "make" FROM "cars_bids_listings";'
@@ -169,47 +174,26 @@ if selected_navbar == "Predict":
 
 api_column1, api_column2, api_column3 = st.columns(3)          
 if selected_navbar == "API":
-        st.title("Our API is free to use and available at http://collectorcarpricing.com:8080/predict")
-        st.text('''Our API requires you send a JSON object with the key 'rows' 
-        and a correspond array of dictionaries with the following keys''')
-        with api_column1:
-            with st.expander("make"):
-                st.write('Make of the car')
-            with st.expander("model"):
-                st.write('Model of the car')
-            with st.expander("mileage"):
-                st.write('Number of miles on the car')
-            with st.expander("status"):
-                st.write('Title status (Clean, Salvage, Other)')
-            with st.expander("engine"):
-                st.write('Type of Engine (View options in the Predict section of the website)')
-                
-        with api_column2:
-            with st.expander("bodystyle"):
-                st.write('Body style (View options in the Predict section of the website)')
-            with st.expander("y_n_reserve"):
-                st.write('Whether you will list the car with a reserve or not (Reserve, No Reserve)')
-            with st.expander("year"):
-                st.write('Year the car was produced')
-            with st.expander("drivetrain"):
-                st.write('Drivetrain of the car (View options in the Predict section of the website)')
-            with st.expander("transmission"):
-                st.write('Transmission on car (View options in the Predict section of the website)')
-        
-        with api_column3:
-            with st.expander("vin"):
-                st.write('Vin # on car')
-         
+    st.subheader("Our API is free to use and available at via a POST request to http://collectorcarpricing.com:8080/predict")
+    st.write('The post request must include the following parameters:')
+    api_data = { "Name": ['make', 'model', 'mileage', 'status', 'engine', 'bodystyle', 'y_n_reserve','year', 'drivetrain', 'transmission', 'vin'],
+                 "Required": ['yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes','yes', 'yes', 'yes', 'yes'],
+                 "Data Type": ['string', 'string', 'float', 'string', 'string', 'string', 'string','int', 'string', 'string', 'string'],
+                 "Accepted Values": ["Any brand of auto manufacturer. If the brand doesnt exist in the training data make will not contribute to the prediction",
+                                    "Any model from an auto manufacturer. If the model doesnt exist in the training data it will use the average value for that make",
+                                    "Any positive number (without commas)",
+                                    "Clean, Salvage, Other",
+                                    "Any engine. If the engine doesnt exist in the training data it will use the average value for that make",
+                                    "SUV/Crossover, Hatchback, Convertible, Van/Minivan, Sedan, Wagon, Truck, Coupe",
+                                    "Reserve, No Reserve",
+                                    "Any year from 1980-present",
+                                    "Rear-wheel drive, 4WD/AWD, Front-wheel drive",
+                                    "Manual, Automatic",
+                                    "Any valid VIN number"]}
+    st.table(pd.DataFrame(api_data))
+                                    
+       
 
-# if selected_navbar == "Model":
-#         with model:
-#             st.header('Training Loss')
-#         with chart:
-#                 graph = mod
-#                 print(mod)
-#                 y = (graph[1].train_score_ / max(graph[1].train_score_ ))
-#                 x = range(0, graph[1].train_score_.shape[0])
-#                 plt = px.scatter(x=x, y=y, labels=dict(x="N_estimators", y="Loss (%)"))
-#                 st.plotly_chart(plt)
+
 
 st.write("Developed by Adam Lang and David Kim [Github Repo]('https://github.com/CodeSmithDSMLProjects/CarSalesModel')")
