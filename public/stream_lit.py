@@ -205,7 +205,7 @@ if selected_navbar == "API":
                                     "One of the following: (Manual, Automatic)",
                                     "Any valid VIN number"]}
     st.table(pd.DataFrame(api_data))
-                                    
+    
        
 
 
