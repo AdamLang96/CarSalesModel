@@ -18,13 +18,13 @@ import altair as alt
 # session = boto3.Session(
 #     aws_access_key_id = "AKIAUH63BSS4PNGLHLFR",
 #     aws_secret_access_key="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",
-#     region_name = 'us-west-2'
+#     region = 'us-west-2'
 # )
 
 session = boto3.Session(
     aws_access_key_id = os.environ["ACCESS_KEY"],
     aws_secret_access_key=os.environ["ACCESS_SECRET"],
-    region_name = os.environ["REGION"]
+    region = os.environ["REGION"]
 )
 
 @st.cache_data(ttl=259200, max_entries=None)
