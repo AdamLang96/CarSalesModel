@@ -27,7 +27,7 @@ class CarsAndBidsTable(Base):
     url = Column(String())
     
 class VinAuditTable(Base):
-    __tablename__ = 'vin_newest_final'
+    __tablename__ = 'vin_audit_data'
     id = Column(Integer(), primary_key=True)    
     vin = Column(String())
     market_value_mean = Column(String())
@@ -41,8 +41,3 @@ class ModelsScore(Base):
     path = Column(String())
     test_score = Column(String())
     environment = Column(String())
-    
-con = create_engine("postgresql+psycopg2://postgres:postgres@classical-project.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com/postgres")
-print(pd.read_sql_table('cars_bids_listings', con))
-# Base.metadata.create_all(con)
-
