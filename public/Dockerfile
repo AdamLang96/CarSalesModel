@@ -17,4 +17,4 @@ RUN pip install -r requirements.txt
 
 COPY stream_lit.py /src/app
 EXPOSE 8501
-CMD [ "streamlit", "run",  "stream_lit.py", "--server.port=8501", "--server.address=0.0.0.0"] 
+CMD [ "streamlit", "run",  "stream_lit.py", "--server.port=80", "--server.address=0.0.0.0"] 
