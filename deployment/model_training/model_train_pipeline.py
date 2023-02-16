@@ -16,9 +16,9 @@ from datetime import date
 from uuid import uuid4
 import shap
 session = boto3.Session(
-    aws_access_key_id = "AKIAUH63BSS4PNGLHLFR",
-    aws_secret_access_key="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",
-    region_name = 'us-west-2')
+    aws_access_key_id = os.environ["ACCESS_KEY"],
+    aws_secret_access_key=os.environ["ACCESS_SECRET"],
+    region_name = os.environ["REGION"])
 
 
 def main():
@@ -26,9 +26,9 @@ def main():
   today = today.strftime("%m-%d-%Y")
   today = str(today) + str(uuid4())
 
-  training_rounds = 1
-  uri = "postgresql+psycopg2://postgres:postgres@classical-project.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com/postgres"
-  model_env = "test"
+  training_rounds = os.environ['TRAINING_ROUNDS']
+  uri = os.environ["URI"]
+  model_env = os.environ["MODEL_ENV"]
   
 
   engine = create_engine(uri)
