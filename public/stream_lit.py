@@ -15,10 +15,16 @@ import os
 import boto3
 from streamlit_option_menu import option_menu
 import altair as alt
+# session = boto3.Session(
+#     aws_access_key_id = "AKIAUH63BSS4PNGLHLFR",
+#     aws_secret_access_key="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",
+#     region_name = 'us-west-2'
+# )
+
 session = boto3.Session(
-    aws_access_key_id = "AKIAUH63BSS4PNGLHLFR",
-    aws_secret_access_key="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",
-    region_name = 'us-west-2'
+    aws_access_key_id = os.environ["ACCESS_KEY"],
+    aws_secret_access_key=os.environ["ACCESS_SECRET"],
+    region_name = os.environ["REGION"]
 )
 
 @st.cache_data(ttl=259200, max_entries=None)
@@ -43,15 +49,10 @@ model_list = []
 for i in s3.Bucket('carsalesmodel').objects.all():
     model_list.append(i.key)
  
-name = 'thismod'    
-mod = pickle.loads(s3.Bucket("carsalesmodel").Object(f'{name}.pkl').get()['Body'].read())
+DATA_URI = os.environ["DATA_URI"]
+engine = create_engine(DATA_URI)
 
-# URI = os.environ["URI"]
-
-engine = create_engine('postgresql+psycopg2://postgres:postgres@classical-project.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com/postgres')
-
-# URL = 'http://collectorcarpricing.com:8080/predict_streamlit'
-URL = 'http://127.0.0.1:8080/predict_streamlit'
+SERVER_URI = os.environ["SERVER_URI"]
 
 MODEL_SQL_QUERY = 'SELECT DISTINCT "model" FROM "cars_bids_listings";'
 MAKE_SQL_QUERY = 'SELECT DISTINCT "make" FROM "cars_bids_listings";'
@@ -134,11 +135,8 @@ if selected_navbar == "Predict":
         
         if button:
             req = get_vin_info(columns[9])
-            # req = {"mean":200000, 'stdev':1230, 'count':1230}
-            
-            
-            
-            newres= rq.post(URL, json={"rows": [{   "make": columns[0],
+            # req = {'mean':60000, 'stdev': 2000, 'count':1000}
+            newres= rq.post(SERVER_URI, json={"rows": [{   "make": columns[0],
                                                     "model": columns[1],
                                                     "mileage": columns[10],
                                                     "status": columns[4], 
