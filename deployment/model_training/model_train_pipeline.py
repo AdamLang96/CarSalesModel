@@ -26,7 +26,7 @@ def main():
   today = today.strftime("%m-%d-%Y")
   today = str(today) + str(uuid4())
 
-  training_rounds = os.environ['TRAINING_ROUNDS']
+  training_rounds = int(os.environ['TRAINING_ROUNDS'])
   uri = os.environ["URI"]
   model_env = os.environ["MODEL_ENV"]
   
