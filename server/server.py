@@ -26,8 +26,10 @@ from category_encoders import TargetEncoder
 import numpy as np
 import shap
 import re
-
-
+import requests as rq
+import yfinance as yf
+from datetime import date
+from functools import lru_cache
 
 def get_column_names_from_ColumnTransformer(column_transformer):
     col_name = []
@@ -51,8 +53,20 @@ def get_column_names_from_ColumnTransformer(column_transformer):
             col_name.append(names)
     return col_name
 
-
-
+@lru_cache(maxsize=100)
+def get_vin_info(vin, api_key = 'VA_DEMO_KEY', num_days = 90, mileage = 'average'):
+    """pulls data from vinaudit api """
+    vinaudit_url = f'https://marketvalue.vinaudit.com/getmarketvalue.php?key={api_key}&vin={vin}&format=json&period={num_days}&mileage={mileage}'
+    req = rq.get(url = vinaudit_url)
+    data = req.json()
+    return data
+    
+@lru_cache(maxsize=100)   
+def fetch_market_data(todays_date):
+    sp500 = yf.download("^GSPC", start= '2023-2-1', end=str(todays_date)) 
+    sp500 = pd.DataFrame(sp500)
+    sp500 = sp500["Adj Close"].iloc[0]
+    return sp500
 
 session = boto3.Session(
     aws_access_key_id = os.environ["ACCESS_KEY"],
@@ -88,6 +102,15 @@ def predict():
     data = request.get_data()
     data = data.decode('UTF-8')
     data = json.loads(data)
+    todays_date = date.today()
+    m_data = fetch_market_data(todays_date)
+    for i in range(len(data["rows"])):
+        vin = data["rows"][i]["vin"]
+        vin_info = get_vin_info(vin)
+        data["rows"][i]["market_value_mean"] = vin_info["mean"]
+        data["rows"][i]["market_value_std"] = vin_info["stdev"]
+        data["rows"][i]["count_over_days"] = str(float(vin_info['count']) / 90)
+        data["rows"][i]["Adj Close"] = m_data
     data = pd.DataFrame(data["rows"], index = [*range(len(data["rows"]))])    
     preds = mod_api.predict(data)
     return jsonify(list(preds))
