@@ -210,3 +210,4 @@ if selected_navbar == "API":
 
 
 st.write("Developed by Adam Lang and David Kim [Github Repo]('https://github.com/CodeSmithDSMLProjects/CarSalesModel')")
+st.write("Contact us at adamglang96@gmail.com and koyykdy@gmail.com")
