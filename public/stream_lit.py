@@ -213,9 +213,10 @@ if selected_navbar == "API":
                                     "Any valid VIN number"]}
     st.table(pd.DataFrame(api_data))
     st.subheader('Ex:')
-    st.text('''curl -d '{"rows": [{"make": "Porsche","model": "Cayenne","mileage": "167500.0","status": "Clean" , "engine":"3.6L V6","drivetrain": "4WD/AWD","transmission" :"Manual (6-Speed)","bodystyle":" SUV/Crossover", "y_n_reserve":" No Reserve","year":"2012.0", "vin": "5YJSA1DP4CFF00027"}]}' -X POST http://127.0.0.1:8080/predict''')
+    st.text('''curl -d '{"rows": [{"make": "Porsche","model": "Cayenne","mileage": "167500.0","status": "Clean" , "engine":"3.6L V6","drivetrain": "4WD/AWD","transmission" :"Manual (6-Speed)","bodystyle":" SUV/Crossover", "y_n_reserve":" No Reserve","year":"2012.0", "vin": "5YJSA1DP4CFF00027"}]}' -X POST http://collectorcarpricing.com:8080/predict''')
        
 
 
 
 st.write("Developed by Adam Lang and David Kim [Github Repo]('https://github.com/CodeSmithDSMLProjects/CarSalesModel')")
+st.write("Contact us at adamglang96@gmail.com and koyykdy@gmail.com")
