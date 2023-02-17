@@ -18,9 +18,9 @@ import altair as alt
 import time
 
 session = boto3.Session(
-    aws_access_key_id = 'AKIAUH63BSS4PNGLHLFR',
-    aws_secret_access_key='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',
-    region_name = 'us-west-2'
+    aws_access_key_id = os.environ["ACCESS_KEY"],
+    aws_secret_access_key=os.environ["ACCESS_SECRET"],
+    region_name = os.environ["REGION"]
 )
 
 
@@ -47,12 +47,10 @@ model_list = []
 for i in s3.Bucket('carsalesmodel').objects.all():
     model_list.append(i.key)
  
-# DATA_URI = os.environ["DATA_URI"]
-DATA_URI='postgresql+psycopg2://postgres:postgres@classical-project.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com/postgres'
+DATA_URI = os.environ["DATA_URI"]
 engine = create_engine(DATA_URI)
 
-# SERVER_URI = os.environ["SERVER_URI"]
-SERVER_URI='http://collectorcarpricing.com:8080/predict_streamlit'
+SERVER_URI = os.environ["SERVER_URI"]
 
 MODEL_SQL_QUERY = 'SELECT DISTINCT "model" FROM "cars_bids_listings";'
 MAKE_SQL_QUERY = 'SELECT DISTINCT "make" FROM "cars_bids_listings";'
@@ -205,7 +203,8 @@ if selected_navbar == "API":
                                     "One of the following: (Manual, Automatic)",
                                     "Any valid VIN number"]}
     st.table(pd.DataFrame(api_data))
-    
+    st.subheader('Ex:')
+    st.text('''curl -d '{"rows": [{"make": "Porsche","model": "Cayenne","mileage": "167500.0","status": "Clean" , "engine":"3.6L V6","drivetrain": "4WD/AWD","transmission" :"Manual (6-Speed)","bodystyle":" SUV/Crossover", "y_n_reserve":" No Reserve","year":"2012.0", "vin": "5YJSA1DP4CFF00027"}]}' -X POST http://127.0.0.1:8080/predict''')
        
 
 
