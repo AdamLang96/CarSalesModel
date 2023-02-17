@@ -73,8 +73,17 @@ with engine.connect() as connection:
     bodyStyle_df = pd.read_sql_query(BODYSTYLE_SQL_QUERY, con=connection)
     soldType_df = pd.read_sql_query(SOLDTYPE_SQL_QUERY, con = connection)
     reserve_df = pd.read_sql_query(YNRESERVE_SQL_QUERY, con = connection)
-    vin = pd.read_sql_query(VIN_SQL_QUERY, con = connection)
-    
+
+make_df.sort_values(by='make', inplace=True)
+model_df.sort_values(by='model', inplace=True)
+engine_df.sort_values(by='engine', inplace=True)
+title_status_df.sort_values(by='status', inplace=True)
+drive_train_df.sort_values(by='drivetrain', inplace=True)
+transmission_df.sort_values(by='transmission', inplace=True)
+bodyStyle_df.sort_values(by='bodystyle', inplace=True)
+soldType_df.sort_values(by='soldtype', inplace=True)
+reserve_df.sort_values(by='y_n_reserve', inplace=True)
+
 st.set_page_config(layout="wide", page_title="Car Sale Value")
 headercol1, headercol2 = st.columns(2)
 with st.container():

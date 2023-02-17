@@ -8,14 +8,15 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-CHROMEDRIVER_LOCATION = "/bin/chromedriver"
-CHROME_HEADLESS_LOCATION = "/bin/headless-chromium"
+# CHROMEDRIVER_LOCATION = "/bin/chromedriver"
+CHROMEDRIVER_LOCATION = "/Users/adamgabriellang/Downloads/chromedriver_mac64_110/chromedriver"
+# CHROME_HEADLESS_LOCATION = "/bin/headless-chromium"
 
 class ChromeDriverWrapper:
     def __init__(self):
         options = webdriver.ChromeOptions()
         options.headless = True
-        options.binary_location = CHROME_HEADLESS_LOCATION
+        # options.binary_location = CHROME_HEADLESS_LOCATION
         options.add_argument("--headless")
         options.add_argument("window-size=1920x1080")
         options.add_argument("--disable-gpu")
@@ -90,6 +91,8 @@ def clean_make(text_car_details):
     """Scrapes all information from an individual listing on CarsandBids.com"""
     result = re.search('Make(.*?)</dd><dt>', text_car_details).group(1)
     result = re.sub("</a", '', re.search('(?<=">)[^\n]+(?=>[^\n]*$)', result).group(0))
+    if result == "Stewart &amp; Stevenson":
+        result = "Stewart and Stevenson"
     return result
 
 def clean_title(string):
@@ -105,13 +108,30 @@ def clean_title(string):
 
 def clean_engine(string):
     """Scrapes all information from an individual listing on CarsandBids.com"""
+    """Scrapes all information from an individual listing on CarsandBids.com"""
     string = str(string)
-    if re.search('[A-Z]{1}[0-9]{1}', string):
-        val = re.search('[A-Z]{1}[0-9]{1}', string).group(0)
+    string = re.search('Engine.+</dd><dt', string).group(0)
+    
+    if re.search('[VWI]{1}[0-9]{1,2}', string):
+        val = re.search('[VWI]{1}[0-9]{1,2}', string).group(0)
     elif re.search('Flat-[0-9]{1}', string):
         val = re.search('Flat-[0-9]{1}', string).group(0)
     elif re.search('Electric', string):
         val = "Electric"
+    elif re.search('Inline-[0-9]{1}', string):
+        val = re.search('Inline-[0-9]{1}', string).group(0).split('-')
+        val = f"I{val[1]}"
+    elif re.search('Inline\s[0-9]{1}', string):
+        val = re.search('Inline\s[0-9]{1}', string).group(0).split(' ')
+        val = f"I{val[1]}"
+    elif re.search('Single Motor', string):
+        val = "Single Motor"
+    elif re.search('Dual Motor', string):
+        val = "Dual Motor"
+    elif re.search('Triple Motor', string):
+        val = "Triple Motor"
+    elif re.search('Rotary', string):
+        val = "Rotary"
     else:
         val = "Other"
     return val
@@ -244,17 +264,6 @@ def pull_data_from_listing_text(text_car_details, text_selling_price, text_dougs
                 output_dict[key] = func(text_car_details, key)
             else:
                 output_dict[key] = func(text_car_details)
-        # except error_1_from_func:
-        #   handle this case
-        # except error_2_from_func:
-        #   handle this case
-        # ...
-        # else:
-        #   default behavior
-        # finally:
-        #   if func(text_car_details)
-        #   if not output_dict[key]:
-        #       output_dict[key] = None
         except:
             output_dict[key] = None
     try:
