@@ -10,13 +10,13 @@ from selenium.webdriver.support import expected_conditions as EC
 
 CHROMEDRIVER_LOCATION = "/bin/chromedriver"
 # CHROMEDRIVER_LOCATION = "/Users/adamgabriellang/Downloads/chromedriver_mac64_110/chromedriver"
-# CHROME_HEADLESS_LOCATION = "/bin/headless-chromium"
+CHROME_HEADLESS_LOCATION = "/bin/headless-chromium"
 
 class ChromeDriverWrapper:
     def __init__(self):
         options = webdriver.ChromeOptions()
         options.headless = True
-        # options.binary_location = CHROME_HEADLESS_LOCATION
+        options.binary_location = CHROME_HEADLESS_LOCATION
         options.add_argument("--headless")
         options.add_argument("window-size=1920x1080")
         options.add_argument("--disable-gpu")
