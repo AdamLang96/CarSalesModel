@@ -17,6 +17,14 @@ from streamlit_option_menu import option_menu
 import altair as alt
 import time
 
+os.environ["ACCESS_KEY"] = "AKIAUH63BSS4PNGLHLFR"
+os.environ["ACCESS_SECRET"] = "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"
+os.environ["REGION"] = "us-west-2"
+os.environ["DATA_URI"] = "postgresql+psycopg2://postgres:postgres@classical-project.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com/postgres"
+os.environ["SERVER_URI"] = "http://collectorcarpricing.com:8080/predict_streamlit"
+
+
+
 session = boto3.Session(
     aws_access_key_id = os.environ["ACCESS_KEY"],
     aws_secret_access_key=os.environ["ACCESS_SECRET"],
@@ -124,6 +132,7 @@ if selected_navbar == "Predict":
         form_columns = st.columns(4)
         text_arr = [['Make', 'Model', 'Year'], ['Engine', 'Title', 'Drive'], ['Body Style', 'Reserve', 'Transmission'], ['Vin', 'Mileage']]
         options_arr = [[make_df, model_df, years], [engine_df, title_status_df, drive_train_df], [bodyStyle_df, reserve_df, transmission_df]]
+        first_make = make_df.iloc[0]["make"]
         columns = []
         for i, col in enumerate(form_columns):
             if i < 3:
@@ -134,9 +143,10 @@ if selected_navbar == "Predict":
                 for j in range(len(text_arr[i])):
                     newcol = col.text_input(text_arr[i][j], key=(i*3)+j)
                     columns.append(newcol)
-                newcol = col.selectbox('Model', model_list, key=(i*3)+j+1, index=0)
+                newcol = col.selectbox('ML Model', model_list, key=(i*3)+j+1, index=0)
                 columns.append(newcol)
-                
+
+    
         sp500 = fetch_market_data()
         
         m = st.markdown("""
