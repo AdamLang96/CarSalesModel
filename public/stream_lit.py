@@ -17,14 +17,6 @@ from streamlit_option_menu import option_menu
 import altair as alt
 import time
 
-os.environ["ACCESS_KEY"] = "AKIAUH63BSS4PNGLHLFR"
-os.environ["ACCESS_SECRET"] = "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"
-os.environ["REGION"] = "us-west-2"
-os.environ["DATA_URI"] = "postgresql+psycopg2://postgres:postgres@classical-project.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com/postgres"
-os.environ["SERVER_URI"] = "http://collectorcarpricing.com:8080/predict_streamlit"
-
-
-
 session = boto3.Session(
     aws_access_key_id = os.environ["ACCESS_KEY"],
     aws_secret_access_key=os.environ["ACCESS_SECRET"],
