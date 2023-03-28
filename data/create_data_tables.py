@@ -42,8 +42,3 @@ class ModelsScore(Base):
     test_score = Column(String())
     environment = Column(String())
 
-
-URI = "postgresql+psycopg2://postgres:postgres@classical-project.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com/postgres"
-con = create_engine(URI)
-data = pd.read_sql_table("cars_bids_listings", con)
-print(max(pd.to_datetime(data["date"])))
