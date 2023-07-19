@@ -38,7 +38,6 @@ def main():
             first_page_listings = scrape_listings(k, 0)
             new_listings = [item for item in first_page_listings if item not in urls]
             new_listings = list(set(new_listings))
-            print(new_listings)
             if not len(new_listings):
                 more_listings=False
 
@@ -109,7 +108,8 @@ def main():
             k+=1
             
         
-
+if __name__ == "__main__":
+    main()
         
 
 

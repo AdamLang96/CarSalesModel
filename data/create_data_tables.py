@@ -1,7 +1,8 @@
 from sqlalchemy import Column,  String, create_engine, Integer, text, inspect
 from sqlalchemy.ext.declarative import declarative_base
-Base = declarative_base()
 import pandas as pd
+Base = declarative_base()
+from datetime import date
 
 class CarsAndBidsTable(Base):
     __tablename__ = 'cars_bids_listings'
@@ -43,7 +44,3 @@ class ModelsScore(Base):
     environment = Column(String())
 
 
-URI = "postgresql+psycopg2://postgres:postgres@classical-project.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com/postgres"
-con = create_engine(URI)
-data = pd.read_sql_table("cars_bids_listings", con)
-print(max(pd.to_datetime(data["date"])))
