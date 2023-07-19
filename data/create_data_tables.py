@@ -43,4 +43,3 @@ class ModelsScore(Base):
     test_score = Column(String())
     environment = Column(String())
 
-
