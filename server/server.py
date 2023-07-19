@@ -79,10 +79,16 @@ URI = os.environ["URI"]
 engine = create_engine(URI)
 
 scores = pd.read_sql_table('models_score', con=engine)
-max_score = scores['test_score'].astype(float).idxmax()
-name = scores["path"][max_score]
+scores_with_market = scores.loc[scores['environment'] == 'with_market']
+scores_without_market = scores.loc[scores['environment'] == 'without_market']
 
-mod_api = pkl.loads(s3.Bucket("carsalesmodel").Object(f'{name}.pkl').get()['Body'].read())
+max_score_with_market  = scores_with_market['test_score'].astype(float).idxmax()
+max_score_without_market  = scores_without_market['test_score'].astype(float).idxmax()
+name_with_market = scores["path"][max_score_with_market]
+name_without_market = scores["path"][max_score_without_market]
+
+mod_api_with_market = pkl.loads(s3.Bucket("carsalesmodel").Object(f'{name_with_market}.pkl').get()['Body'].read())
+mod_api_without_market = pkl.loads(s3.Bucket("carsalesmodel").Object(f'{name_without_market}.pkl').get()['Body'].read())
 
 app = Flask(__name__)
 
@@ -112,7 +118,7 @@ def predict():
         data["rows"][i]["count_over_days"] = str(float(vin_info['count']) / 90)
         data["rows"][i]["Adj Close"] = m_data
     data = pd.DataFrame(data["rows"], index = [*range(len(data["rows"]))])    
-    preds = mod_api.predict(data)
+    preds = mod_api_with_market.predict(data)
     return jsonify(list(preds))
 
 

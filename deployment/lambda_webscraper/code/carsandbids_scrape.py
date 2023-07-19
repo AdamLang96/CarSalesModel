@@ -9,7 +9,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 CHROMEDRIVER_LOCATION = "/bin/chromedriver"
-# CHROMEDRIVER_LOCATION = "/Users/adamgabriellang/Downloads/chromedriver_mac64_110/chromedriver"
 CHROME_HEADLESS_LOCATION = "/bin/headless-chromium"
 
 class ChromeDriverWrapper:

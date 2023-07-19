@@ -1,7 +1,8 @@
 from sqlalchemy import Column,  String, create_engine, Integer, text, inspect
 from sqlalchemy.ext.declarative import declarative_base
-Base = declarative_base()
 import pandas as pd
+Base = declarative_base()
+from datetime import date
 
 class CarsAndBidsTable(Base):
     __tablename__ = 'cars_bids_listings'

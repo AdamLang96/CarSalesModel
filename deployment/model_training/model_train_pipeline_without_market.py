@@ -15,6 +15,7 @@ import boto3
 from datetime import date
 from uuid import uuid4
 import shap
+
 session = boto3.Session(
     aws_access_key_id = os.environ["ACCESS_KEY"],
     aws_secret_access_key=os.environ["ACCESS_SECRET"],
@@ -28,7 +29,7 @@ def main():
 
   training_rounds = int(os.environ['TRAINING_ROUNDS'])
   uri = os.environ["URI"]
-  model_env = os.environ["MODEL_ENV"]
+  model_env = 'without_market'
   
 
   engine = create_engine(uri)
@@ -44,51 +45,20 @@ def main():
     print(id_max)
 
 
-  sqlstmt_cb = text('''SELECT * FROM "cars_bids_listings"
-                INNER JOIN "vin_audit_data"
-                ON "cars_bids_listings"."vin" = "vin_audit_data"."vin"''')
+  sqlstmt_cb = text('''SELECT * FROM "cars_bids_listings"''')
 
   full_data = pd.read_sql_query(sqlstmt_cb, con=engine)
   full_data["Date"] = pd.to_datetime(full_data["date"])
   full_data.drop(columns="date")
-  sp500 = yf.download("^GSPC", start= '2019-1-1', end=str(date.today())) 
-  idx = pd.date_range('2019-1-1', str(date.today()))
-  sp500 = sp500.reindex(idx, fill_value=0)
-
-  price_mem = -1
-  vol_mem = -1
-  first_ind = 0
-  for i in range(len(sp500['Adj Close'])):
-    if sp500['Adj Close'][i] == 0:
-      if i == 0:
-        if sp500['Open'][i+1] == 0:
-          price_mem = sp500['Open'][i+2]
-          vol_mem = sp500['Volume'][i+2]
-        else:
-          price_mem = sp500['Open'][i+1]
-          vol_mem = sp500['Volume'][i+1]
-      sp500['Open'][i] = price_mem
-      sp500['High'][i] = price_mem
-      sp500['Low'][i] = price_mem
-      sp500['Close'][i] = price_mem
-      sp500['Adj Close'][i] = price_mem
-      sp500['Volume'][i] = vol_mem
-    else:
-      vol_mem = sp500['Volume'][i]
-      price_mem = sp500['Adj Close'][i]
   full_data.drop_duplicates(inplace=True, subset=['vin'])
-  sp500 = pd.DataFrame(sp500)
-  sp500 = sp500.groupby(sp500.index).first()
   full_data.reset_index()
-  full_data = full_data.merge(sp500, left_on="Date", right_index=True, how="left")
   prelim_data = full_data[["make", "drivetrain", "model", "mileage", "year", "price",
-                              "bodystyle",  "y_n_reserve", 'market_value_mean',
-                              'market_value_std', 'count_over_days', 'Adj Close', 'engine', 'status', 'transmission']]
+                              "bodystyle", 'engine', 'status', 'transmission']]
 
   prelim_data.dropna(inplace=True, axis=0)
 
   # convert these to numeric and change capitalization
-  num_cols = ["mileage", "year", 'market_value_mean', 'market_value_std', 'count_over_days', 'Adj Close']
+  num_cols = ["mileage", "year"]
   for i in num_cols:
     prelim_data[i] = prelim_data[i].astype(float)
   cat_cols = ["make",  "y_n_reserve", "bodystyle", "drivetrain", "status","transmission"]
@@ -166,3 +136,7 @@ def main():
 
 
 
+if __name__ == '__main__':
+  main()
+  
+  

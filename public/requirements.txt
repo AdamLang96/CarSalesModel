@@ -11,4 +11,3 @@ watchdog==2.2.1
 category_encoders
 scikit-learn==1.0.2
 psycopg2-binary
-
