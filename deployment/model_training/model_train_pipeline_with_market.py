@@ -15,7 +15,6 @@ import boto3
 from datetime import date
 from uuid import uuid4
 import shap
-import mlflow
 
 session = boto3.Session(
     aws_access_key_id = os.environ["ACCESS_KEY"],
@@ -29,7 +28,7 @@ def main():
   today = str(today) + str(uuid4())
 
   training_rounds = int(os.environ['TRAINING_ROUNDS'])
-  uri = os.environ["URI"]
+  uri = 'postgresql+psycopg2://postgres:postgres@classical-project.ceq8tkxrvrbb.us-west-2.rds.amazonaws.com/postgres'
   model_env = 'with_market'
   
 
@@ -49,8 +48,10 @@ def main():
   sqlstmt_cb = text('''SELECT * FROM "cars_bids_listings"
                 INNER JOIN "vin_audit_data"
                 ON "cars_bids_listings"."vin" = "vin_audit_data"."vin"''')
+  
 
   full_data = pd.read_sql_query(sqlstmt_cb, con=engine)
+  print(full_data[["engine", "status"]])
   full_data["Date"] = pd.to_datetime(full_data["date"])
   full_data.drop(columns="date")
   sp500 = yf.download("^GSPC", start= '2019-1-1', end=str(date.today())) 
@@ -85,7 +86,7 @@ def main():
   prelim_data = full_data[["make", "drivetrain", "model", "mileage", "year", "price",
                               "bodystyle",  "y_n_reserve", 'market_value_mean',
                               'market_value_std', 'count_over_days', 'Adj Close', 'engine', 'status', 'transmission']]
-
+  print(prelim_data)
   prelim_data.dropna(inplace=True, axis=0)
 
   # convert these to numeric and change capitalization
@@ -107,7 +108,7 @@ def main():
                       ('cat', onehot_transformer, cat_cols),
                       ('target', target_transformer, target_cols)], remainder="passthrough")
 
-
+  print(prelim_data)
   y = prelim_data["price"].astype(float)
   X = prelim_data
   X.drop(columns=["price"], inplace=True)

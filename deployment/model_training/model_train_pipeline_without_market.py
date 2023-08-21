@@ -9,7 +9,6 @@ from sklearn.model_selection import train_test_split
 from category_encoders import TargetEncoder
 import pickle as pkl
 from sqlalchemy import text
-import yfinance as yf
 import os
 import boto3
 from datetime import date
