@@ -11,6 +11,10 @@ def main():
     engine = create_engine(URI)
 
     PULL_URLS= text('SELECT "url" FROM "cars_bids_listings"')
+    everything= text('SELECT * FROM "cars_bids_listings"')
+    with engine.connect() as connection:
+         urls = connection.execute(everything).fetchall()
+    
     PULL_INDEX_CB= text('SELECT "id" FROM "cars_bids_listings"')
     PULL_INDEX_VIN_AUDIT= text('SELECT "id" FROM "vin_audit_data"')
 
@@ -66,6 +70,7 @@ def main():
                 try:
                     idx_CB += 1
                     with engine.connect() as connection:
+                        print(cb_row)
                         connection.execute(car_bids_sql_stmt,
                                             v0  = idx_CB,
                                             v1  = cb_row["Make"],

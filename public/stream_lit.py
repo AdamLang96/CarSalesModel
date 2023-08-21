@@ -4,7 +4,6 @@ This script allows the user to make predictions on sales prices for cars on Cars
 
 """
 from datetime import date
-import pickle
 import requests as rq
 import plotly.express as px
 import streamlit as st
@@ -21,7 +20,6 @@ session = boto3.Session(
     aws_access_key_id = os.environ["ACCESS_KEY"],
     aws_secret_access_key=os.environ["ACCESS_SECRET"],
     region_name = os.environ["REGION"])
-
 
 
 @st.cache_data(ttl=259200, max_entries=None)
@@ -158,10 +156,9 @@ if selected_navbar == "Predict":
         
         if button:
             try:
-                req = get_vin_info(columns[9])
-                with st.spinner('Running Prediction...'):
-                    time.sleep(5)
-                newres= rq.post(SERVER_URI, json={"rows": [{ "make": columns[0],
+                if not columns[9]:
+                    endpoint = f'{SERVER_URI}/predict_streamlit_no_vin'
+                    newres= rq.post(endpoint, json={"rows": [{ "make": columns[0],
                                                             "model": columns[1],
                                                             "mileage": columns[10],
                                                             "status": columns[4], 
@@ -171,11 +168,27 @@ if selected_navbar == "Predict":
                                                             "bodystyle": columns[6],
                                                             "y_n_reserve":columns[7],
                                                             "year":columns[2],
-                                                            'market_value_mean': req["mean"], 
-                                                            'market_value_std':req['stdev'], 
-                                                            'count_over_days':str(float(req['count']) / 90), 
-                                                            'Adj Close':sp500,
-                                                            'tree_model': columns[11]}]})            
+                                                            'tree_model': columns[11]}]})  
+                else:
+                    endpoint = f'{SERVER_URI}/predict_streamlit_no_vin'
+                    req = get_vin_info(columns[9])
+                    with st.spinner('Running Prediction...'):
+                        time.sleep(5)
+                    newres= rq.post(f'{SERVER_URI}/predict_streamlit', json={"rows": [{ "make": columns[0],
+                                                                "model": columns[1],
+                                                                "mileage": columns[10],
+                                                                "status": columns[4], 
+                                                                "engine":columns[3],
+                                                                "drivetrain": columns[5],
+                                                                "transmission" :columns[8],
+                                                                "bodystyle": columns[6],
+                                                                "y_n_reserve":columns[7],
+                                                                "year":columns[2],
+                                                                'market_value_mean': req["mean"], 
+                                                                'market_value_std':req['stdev'], 
+                                                                'count_over_days':str(float(req['count']) / 90), 
+                                                                'Adj Close':sp500,
+                                                                'tree_model': columns[11]}]})            
                 response = newres.json()
                 newres = response[0][0]
                 shaps = pd.DataFrame(pd.Series(response[1]))
@@ -192,7 +205,7 @@ if selected_navbar == "Predict":
                 st.altair_chart(chart, use_container_width=True)
                 st.markdown(f"# Predicted Price on CarsAndBids.com: **${round(newres)}**")
             except:
-                st.write('Unable to gather information from VIN. Please try a different vehicle')
+                st.write('Failed to make prediction. Please try again')
 
 api_column1, api_column2, api_column3 = st.columns(3)          
 if selected_navbar == "API":

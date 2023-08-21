@@ -10,7 +10,7 @@ class CarsAndBidsTable(Base):
     make  = Column(String())
     model  = Column(String())
     mileage  = Column(String())
-    vin  = Column(String())
+    vin  = Column(String())          
     status  = Column(String())
     location = Column(String())
     engine  = Column(String())
@@ -42,4 +42,5 @@ class ModelsScore(Base):
     path = Column(String())
     test_score = Column(String())
     environment = Column(String())
+
 

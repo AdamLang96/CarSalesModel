@@ -9,9 +9,6 @@ This server contains the following endpoints:
   /predict (POST) - returns the column headers of the file
 """
 
-
-
-
 import json
 import pandas as pd
 from sqlalchemy import create_engine
@@ -140,12 +137,12 @@ def predict_streamlit():
     model_name = data['tree_model']
     del data['tree_model']
     data = pd.DataFrame(data, index = [0])
-    mod = pkl.loads(s3.Bucket("carsalesmodel").Object(f'{model_name}').get()['Body'].read())
-    shap_data = mod['columntransformer']
-    featurenames = get_column_names_from_ColumnTransformer(shap_data)
-    featurenames.append('model')
-    featurenames.append('engine')
-    shap_data_prediction = shap_data.transform(data).toarray()
+    pipe = pkl.loads(s3.Bucket("carsalesmodel").Object(f'{model_name}').get()['Body'].read())
+    transformer = pipe['columntransformer']
+    feature_names = get_column_names_from_ColumnTransformer(transformer)
+    feature_names.append('model')
+    feature_names.append('engine')
+    shap_data_prediction = transformer.transform(data).toarray()
     shap_exp = pkl.loads(s3.Bucket("shap-explainers").Object(f'{model_name}').get()['Body'].read())
     shap_exp =  shap_exp.shap_values(shap_data_prediction)
     shap_exp = shap_exp[0]
@@ -154,20 +151,20 @@ def predict_streamlit():
     for i in feature_map:
         name, prefix = i, feature_map[i]
         feature_sum = 0
-        for j in range(len(featurenames)):
-            if re.search(prefix, featurenames[j]):
+        for j in range(len(feature_names)):
+            if re.search(prefix, feature_names[j]):
                 feature_sum += shap_exp[j]
-            elif featurenames[j]=='model':
+            elif feature_names[j]=='model':
                 feature_dict["Model"] = shap_exp[j]
-            elif featurenames[j]=='engine':
+            elif feature_names[j]=='engine':
                 feature_dict["Engine"] = shap_exp[j]
-            elif featurenames[j]=='year':
+            elif feature_names[j]=='year':
                 feature_dict["Year"] = shap_exp[j]
-            elif featurenames[j]=='mileage':
+            elif feature_names[j]=='mileage':
                 feature_dict["Mileage"] = shap_exp[j]
         feature_dict[name] = feature_sum
         feature_sum = 0        
-    preds = list(mod.predict(data))
+    preds = list(pipe.predict(data))
     return jsonify(list([preds, feature_dict]))
 
 if __name__ == '__main__':

@@ -15,19 +15,14 @@ class ChromeDriverWrapper:
     def __init__(self):
         options = webdriver.ChromeOptions()
         options.headless = True
-        options.binary_location = CHROME_HEADLESS_LOCATION
         options.add_argument("--headless")
         options.add_argument("window-size=1920x1080")
         options.add_argument("--disable-gpu")
         options.add_argument("--no-sandbox")
-        # options.add_argument("start-maximized")
-        # options.add_argument("enable-automation")
-        # options.add_argument("--disable-infobars")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument('--disable-gpu-sandbox')
         options.add_argument("--single-process")
         options.add_argument("--disable-extensions") 
-        # options.add_argument('--remote-debugging-port=9222')
         options.add_argument(
             '"user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"')
         self._driver = webdriver.Chrome(options=options, executable_path=CHROMEDRIVER_LOCATION)
@@ -109,8 +104,6 @@ def clean_engine(string):
     """Scrapes all information from an individual listing on CarsandBids.com"""
     """Scrapes all information from an individual listing on CarsandBids.com"""
     string = str(string)
-    string = re.search('Engine.+</dd><dt', string).group(0)
-    
     if re.search('[VWI]{1}[0-9]{1,2}', string):
         val = re.search('[VWI]{1}[0-9]{1,2}', string).group(0)
     elif re.search('Flat-[0-9]{1}', string):
@@ -169,6 +162,7 @@ def clean_all_but_make_model_location(text_car_details, keyword):
     result = result[::-1]
     result = result.split(">")[0]
     result = result[::-1]
+    print
     if keyword == "Title Status":
         result = re.sub(r'\([^)]*\)', '', result)
         result = clean_title(result)
