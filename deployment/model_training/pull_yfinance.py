@@ -30,6 +30,6 @@ def pull_yfin(full_data):
   sp500 = pd.DataFrame(sp500)
   sp500 = sp500.groupby(sp500.index).first()
   full_data.reset_index()
-  full_data['date'] = pd.to_datetime[full_data['date']]
+  full_data['date'] = pd.to_datetime(full_data['date'])
   full_data = full_data.merge(sp500, left_on="date", right_index=True, how="left")
   return full_data

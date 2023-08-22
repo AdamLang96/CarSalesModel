@@ -11,20 +11,21 @@ import pickle as pkl
 import os
 import boto3
 import shap
-import argparse
 import numpy as np
 import pandas as pd
+import yaml
 
 session = boto3.Session(
     aws_access_key_id      = os.environ["ACCESS_KEY"],
     aws_secret_access_key  = os.environ["ACCESS_SECRET"],
-    region_name            = os.environ["REGION"])
+    region_name            = os.environ["REGION"]
+    )
 
-def main(with_or_without_market):
+def main(train_rounds, cv, model_bucket_path, shap_bucket_path):
   today = date.today().strftime("%m-%d-%Y")
-  training_rounds = int(os.environ['TRAINING_ROUNDS'])
+  training_rounds = int(train_rounds)
   uri             = os.environ["URI"]
-  model_env       = with_or_without_market
+  model_env       = os.environ["MODEL_TYPE"]
   
   engine = create_engine(uri)
   with engine.connect() as conn:
@@ -35,8 +36,9 @@ def main(with_or_without_market):
     id_max = 0
   else:
     id_max = max([id_ for (id_, ) in idx])
-    
-  if with_or_without_market == 'with_market':
+  
+  
+  if model_env == 'with_market':
         sqltxt   = '''SELECT * FROM "cars_bids_listings"
                       INNER JOIN "vin_audit_data"
                       ON "cars_bids_listings"."vin" = "vin_audit_data"."vin"'''
@@ -63,7 +65,7 @@ def main(with_or_without_market):
   full_data.drop_duplicates(inplace=True, subset=['vin'])
   full_data.reset_index(inplace=True)
 
-  if with_or_without_market == 'with_market':
+  if model_env == 'with_market':
     full_data = pull_yfin(full_data)
     
   prelim_data = full_data[cols]
@@ -89,7 +91,7 @@ def main(with_or_without_market):
   target_transformer = make_pipeline(target)
 
   preprocessor = ColumnTransformer(
-      transformers=[  ('num',    num_transformer,    num_cols),
+      transformers=  [('num',    num_transformer,    num_cols),
                       ('cat',    onehot_transformer, cat_cols),
                       ('target', target_transformer, target_cols)], remainder = "passthrough")
 
@@ -108,7 +110,7 @@ def main(with_or_without_market):
                      mod_name+"__n_estimators":  n_estimators}]
   
   pipe = make_pipeline(preprocessor, GradientBoostingRegressor())
-  pipe = GridSearchCV(estimator = pipe, param_grid = search_grid, cv = 5, scoring = 'neg_root_mean_squared_error')
+  pipe = GridSearchCV(estimator = pipe, param_grid = search_grid, cv = int(cv), scoring = 'neg_root_mean_squared_error')
   pipe.fit(X_tr, y_tr)
   
   with engine.connect() as conn:
@@ -120,10 +122,7 @@ def main(with_or_without_market):
   transformer = best_estimator['columntransformer']
   shap_test_data = transformer.transform(X_tr).toarray()
   exp            = shap.TreeExplainer(best_estimator['gradientboostingregressor'], shap_test_data)
-
-  bucket      = 'collectorcarsalesmodel'
-  shap_bucket = 'car-shap-explainers'
-  key         = f'{today}_{with_or_without_market}.pkl'
+  key         = f'{today}_{model_env}.pkl'
   
   with open(f'/tmp/{key}', 'wb') as f:
     pkl.dump(pipe, f)
@@ -131,13 +130,15 @@ def main(with_or_without_market):
     pkl.dump(exp, g)
 
   s3 = session.resource('s3')
-  s3.meta.client.upload_file(Filename=f'/tmp/{key}', Bucket=bucket, Key=key)
-  s3.meta.client.upload_file(Filename=f'/tmp/shap_{key}', Bucket=shap_bucket, Key=key)
+  s3.meta.client.upload_file(Filename=f'/tmp/{key}', Bucket=model_bucket_path, Key=key)
+  s3.meta.client.upload_file(Filename=f'/tmp/shap_{key}', Bucket=shap_bucket_path, Key=key)
   return "finished"
 
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser()
-  parser.add_argument('--model_type', type=str, help='Train model with or without market data. options are "with_market" or "without_market"')
-  args = parser.parse_args()
-  main(args.model_type)
-  
+  with open('training_config.yml', 'r') as file:
+    config = yaml.safe_load(file)
+    
+    main(train_rounds      = config['training']['training_rounds'],
+         cv                = config['training']['cross_validation_rounds'],
+         model_bucket_path = config['artifacts']['model_bucket_path'],
+         shap_bucket_path  = config['artifacts']['shap_bucket_path'])

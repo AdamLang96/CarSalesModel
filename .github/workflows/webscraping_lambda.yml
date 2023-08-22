@@ -1,4 +1,4 @@
-name: Deploy Docker image for webscraping lambda
+name: Deploy Docker image for webscraping 
 
 on:
   push:
@@ -8,7 +8,7 @@ jobs:
   build:
     defaults:
       run:
-        working-directory: deployment/lambda_webscraper
+        working-directory: deployment/webscraper
     name: Build Image
     runs-on: ubuntu-latest
 

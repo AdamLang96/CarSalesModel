@@ -40,10 +40,7 @@ RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 COPY code/ .
-COPY cars_full.csv .
 
-ENV AWS_ACCESS_KEY=AKIAWO4VL3W2TJBJLKPD
-ENV AWS_SECRET_KEY=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
-CMD ["python3", "get_vin.py"]
+CMD ["python3", "update_database.py"]
 
 

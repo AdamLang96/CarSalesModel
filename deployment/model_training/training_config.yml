@@ -1,0 +1,7 @@
+training:
+  training_rounds: 5
+  cross_validation_rounds: 5
+  
+artifacts:
+  model_bucket_path: collectorcarsalesmodel
+  shap_bucket_path: car-shap-explainers
