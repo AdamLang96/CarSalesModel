@@ -43,7 +43,7 @@ def main():
             new_listings = [item for item in first_page_listings if item not in urls]
             new_listings = list(set(new_listings))
             if not len(new_listings):
-                more_listings=False
+                more_listings = False
 
             for i in new_listings:
                 try:
@@ -72,7 +72,7 @@ def main():
                     with engine.connect() as connection:
                         print(cb_row)
                         connection.execute(car_bids_sql_stmt,
-                                            v0  = idx_CB,
+                                            v0  = str(idx_CB),
                                             v1  = cb_row["Make"],
                                             v2  = cb_row["Model"],
                                             v3  = cb_row["Mileage"],
@@ -105,7 +105,7 @@ def main():
                     with engine.connect() as connection:
                 
                         connection.execute(vin_audit_sql_stmt,
-                                            v0=idx_VA, v1= vin_audit_data["VIN"], v2=vin_audit_data["Market_Value_Mean"], v3=vin_audit_data["Market_Value_Std"], v4=vin_audit_data["Count"],
+                                            v0=str(idx_VA), v1= vin_audit_data["VIN"], v2=vin_audit_data["Market_Value_Mean"], v3=vin_audit_data["Market_Value_Std"], v4=vin_audit_data["Count"],
                                             v5=vin_audit_data["Count_Over_Days"])
                         connection.commit        
                 except:

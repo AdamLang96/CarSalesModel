@@ -36,33 +36,29 @@ def main(with_or_without_market):
   else:
     id_max = max([id_ for (id_, ) in idx])
     
-#FIX COLUMN NAMES
   if with_or_without_market == 'with_market':
         sqltxt   = '''SELECT * FROM "cars_bids_listings"
                       INNER JOIN "vin_audit_data"
                       ON "cars_bids_listings"."vin" = "vin_audit_data"."vin"'''
         
         cols     =  ["make", "drivetrain", "model", "mileage", "year", "price",
-                     "bodystyle",  "y_n_reserve", 'market_value_mean',
+                     "body_style",  "y_n_reserve", 'market_value_mean',
                      'market_value_std', 'count_over_days', 'Adj Close', 
-                     'engine', 'status', 'transmission']
+                     'engine', 'title_status', 'transmission']
         
         num_cols =  ["mileage", "year", 'market_value_mean', 
                      'market_value_std', 'count_over_days', 
-                     'adj_close']
+                     'Adj Close']
         
   else:
         sqltxt   = '''SELECT * FROM "cars_bids_listings"'''
         
         cols     = ["make", "drivetrain", "model", "mileage", "year", "price",
-                    "bodystyle", 'engine', 'status', 'transmission',  "y_n_reserve"]
+                    "body_style", 'engine', 'title_status', 'transmission',  "y_n_reserve"]
        
         num_cols = ["mileage", "year"]
 
-  cols = ["make", "drivetrain", "model", "mileage", "year", "price",
-          "body_style", 'engine', 'title_status', 'transmission',  "y_n_reserve"]
   
-  num_cols = ["mileage", "year"]
   full_data = pd.read_sql_query(text(sqltxt), con=engine)
   full_data.drop_duplicates(inplace=True, subset=['vin'])
   full_data.reset_index(inplace=True)
@@ -79,10 +75,10 @@ def main(with_or_without_market):
   for i in num_cols:
     prelim_data[i] = prelim_data[i].astype(float)
     
-  cat_cols = ["Make",  "Y_N_Reserve", "Body Style", 
-              "Drivetrain", "Title Status","Transmission"]
+  cat_cols = ["make",  "y_n_reserve", "body_style", 
+              "drivetrain", "title_status", "transmission"]
   
-  target_cols = ["Model", "Engine"]
+  target_cols = ["model", "engine"]
   
   scaler = StandardScaler()
   onehot = OneHotEncoder(handle_unknown="ignore")
@@ -97,9 +93,9 @@ def main(with_or_without_market):
                       ('cat',    onehot_transformer, cat_cols),
                       ('target', target_transformer, target_cols)], remainder = "passthrough")
 
-  y              = prelim_data["Price"].astype(float)
+  y              = prelim_data["price"].astype(float)
   X              = prelim_data
-  X.drop(columns = ["Price"], inplace=True)
+  X.drop(columns = ["price"], inplace=True)
 
   X_tr, X_tst, y_tr, y_tst = train_test_split(X, y, train_size= .8)
   
@@ -118,15 +114,16 @@ def main(with_or_without_market):
   with engine.connect() as conn:
       sqlstmt_ms = text('''INSERT INTO models_score
                           VALUES (:v0, :v1, :v2, :v3)''')
-      conn.execute(sqlstmt_ms, v0=id_max+1, v1=str(today), v2=pipe.score(X_tst, y_tst), v3=model_env)
+      conn.execute(sqlstmt_ms, v0=id_max+1, v1=str(today), v2=pipe.score(X_tst, y_tst) * -1, v3=model_env)
   
-  shap_data      = pipe['columntransformer']
-  shap_test_data = shap_data.transform(X_tr).toarray()
-  exp            = shap.TreeExplainer(pipe['gradientboostingregressor'], shap_test_data)
+  best_estimator = pipe.best_estimator_
+  transformer = best_estimator['columntransformer']
+  shap_test_data = transformer.transform(X_tr).toarray()
+  exp            = shap.TreeExplainer(best_estimator['gradientboostingregressor'], shap_test_data)
 
-  bucket      = 'carsalesmodel'
-  shap_bucket = 'shap-explainers'
-  key         = f'{today}.pkl'
+  bucket      = 'collectorcarsalesmodel'
+  shap_bucket = 'car-shap-explainers'
+  key         = f'{today}_{with_or_without_market}.pkl'
   
   with open(f'/tmp/{key}', 'wb') as f:
     pkl.dump(pipe, f)

@@ -66,7 +66,6 @@ def scrape_listings(page_number, delay_seconds_between_gets):
 
 def scrape_text_from_listing(url):
     """Scrapes all information from an individual listing on CarsandBids.com"""
-   
     driver = ChromeDriverWrapper()
     driver.get_url(url)
     car_details = WebDriverWait(driver._driver, 5).until(EC.visibility_of_element_located((By.XPATH,
@@ -101,7 +100,6 @@ def clean_title(string):
     return val
 
 def clean_engine(string):
-    """Scrapes all information from an individual listing on CarsandBids.com"""
     """Scrapes all information from an individual listing on CarsandBids.com"""
     string = str(string)
     if re.search('[VWI]{1}[0-9]{1,2}', string):
@@ -233,7 +231,6 @@ def clean_color(text_color):
 
 def pull_data_from_listing_text(text_car_details, text_selling_price, text_dougs_notes,
                                 text_model_year, text_auction_date):
-
     """Scrapes all information from an individual listing on CarsandBids.com"""
     keywords = ["Make", "Model", "Mileage", "VIN","Title Status", "Location",
                 "Engine", "Drivetrain", "Transmission", "Body Style",
