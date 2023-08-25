@@ -1,0 +1,17 @@
+training:
+  training_rounds: 5
+  cross_validation_rounds: 5
+  hyper_parameter_bounds:
+    learning_rate:
+      lower: 0.01
+      upper: 0.1
+    max_depth:
+      lower: 3
+      upper: 15
+    n_estimators:
+      lower: 10
+      upper: 100
+  
+artifacts:
+  model_bucket_path: collectorcarsalesmodel
+  shap_bucket_path: car-shap-explainers

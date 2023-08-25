@@ -92,7 +92,7 @@ def main():
                                         v19 = cb_row["URL"])
                     print('insert to cars complete')
 
-                # except:
+             
                 warnings.warn("Unable add data to carsandbidsdata")
                 
                 vin_audit_sql_stmt = text('''INSERT INTO "vin_audit_data" 

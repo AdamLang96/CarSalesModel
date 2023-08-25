@@ -1,4 +1,4 @@
-name: Deploy to Docker image for model training
+name: Deploy docker image for server
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
 
 defaults:
   run:
-    working-directory: deployment/model_training
+    working-directory: server
 
 jobs:
   
@@ -34,8 +34,8 @@ jobs:
     - name: Build, tag, and push image to Amazon ECR
       env:
         ECR_REGISTRY: ${{ secrets.ECR_REPO_URI }}
-        ECR_REPOSITORY: lambdas
-        IMAGE_TAG: train_model_latest
+        ECR_REPOSITORY: servers
+        IMAGE_TAG: flask_latest
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG

@@ -1,14 +1,3 @@
-"""Spins up the Flask server for model predictions
-
-Requires the calling environment to have installed:
-- Pandas
-- Pickle
-- Flask
-
-This server contains the following endpoints:
-  /predict (POST) - returns the column headers of the file
-"""
-
 import json
 import pandas as pd
 from sqlalchemy import create_engine
@@ -17,6 +6,7 @@ import pandas as pd
 import boto3
 import pickle as pkl
 import os
+from sklearn.model_selection import GridSearchCV
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from category_encoders import TargetEncoder
@@ -30,7 +20,7 @@ from functools import lru_cache
 
 def get_column_names_from_ColumnTransformer(column_transformer):
     col_name = []
-    for transformer_in_columns in column_transformer.transformers_[:-1]:#the last transformer is ColumnTransformer's 'remainder'
+    for transformer_in_columns in column_transformer.transformers_[:-1]:
         raw_col_name = transformer_in_columns[2]
         if isinstance(transformer_in_columns[1], Pipeline): 
             transformer = transformer_in_columns[1].steps[-1][1]
@@ -40,9 +30,9 @@ def get_column_names_from_ColumnTransformer(column_transformer):
             if isinstance(transformer, TargetEncoder):
                 names = list(transformer.get_feature_names(raw_col_name))
             names = transformer.get_feature_names()
-        except AttributeError: # if no 'get_feature_names' function, use raw column name
+        except AttributeError: 
             names = raw_col_name
-        if isinstance(names, np.ndarray): # eg.
+        if isinstance(names, np.ndarray):
             col_name += names.tolist()
         elif isinstance(names,list):
             col_name += names    
@@ -79,72 +69,65 @@ scores = pd.read_sql_table('models_score', con=engine)
 scores_with_market = scores.loc[scores['environment'] == 'with_market']
 scores_without_market = scores.loc[scores['environment'] == 'without_market']
 
-max_score_with_market  = scores_with_market['test_score'].astype(float).idxmax()
-max_score_without_market  = scores_without_market['test_score'].astype(float).idxmax()
+max_score_with_market  = scores_with_market['test_score'].astype(float).idxmin()
+max_score_without_market  = scores_without_market['test_score'].astype(float).idxmin()
 name_with_market = scores["path"][max_score_with_market]
 name_without_market = scores["path"][max_score_without_market]
 
-mod_api_with_market = pkl.loads(s3.Bucket("carsalesmodel").Object(f'{name_with_market}.pkl').get()['Body'].read())
-mod_api_without_market = pkl.loads(s3.Bucket("carsalesmodel").Object(f'{name_without_market}.pkl').get()['Body'].read())
+mod_api_with_market = pkl.loads(s3.Bucket("collectorcarsalesmodel").Object(f'{name_with_market}_with_market.pkl').get()['Body'].read()).best_estimator_
+mod_api_without_market = pkl.loads(s3.Bucket("collectorcarsalesmodel").Object(f'{name_without_market}_without_market.pkl').get()['Body'].read()).best_estimator_
 
 app = Flask(__name__)
 
 @app.route('/')
-
+def hello():
+    return jsonify({'hello':'world'})
 
 @app.route("/predict", methods=['POST'])
 def predict():
-    """Receives car metadata, feeds into trained model, returns prediction as JSON
-    Receives data (JSON) in the following structure:
-    key : value
-    Returns
-    ----------
-    preds
-        estimated sale value on CarsAndBids.com and the standard deviation
-    """
     data = request.get_data()
     data = data.decode('UTF-8')
     data = json.loads(data)
-    todays_date = date.today()
-    m_data = fetch_market_data(todays_date)
-    for i in range(len(data["rows"])):
-        vin = data["rows"][i]["vin"]
+    if 'vin' in list(data.keys()):
+        todays_date = date.today()
+        m_data = fetch_market_data(todays_date)
+        vin = data["vin"]
         vin_info = get_vin_info(vin)
-        data["rows"][i]["market_value_mean"] = vin_info["mean"]
-        data["rows"][i]["market_value_std"] = vin_info["stdev"]
-        data["rows"][i]["count_over_days"] = str(float(vin_info['count']) / 90)
-        data["rows"][i]["Adj Close"] = m_data
-    data = pd.DataFrame(data["rows"], index = [*range(len(data["rows"]))])    
-    preds = mod_api_with_market.predict(data)
-    return jsonify(list(preds))
+        data["market_value_mean"] = vin_info["mean"]
+        data["market_value_std"] = vin_info["stdev"]
+        data["count_over_days"] = str(float(vin_info['count']) / 90)
+        data["Adj Close"] = m_data
+        data = pd.DataFrame({k: [v] for k, v in data.items()})
+        preds = mod_api_with_market.predict(data)
+    else:
+        data = pd.DataFrame({k: [v] for k, v in data.items()})
+        preds = mod_api_without_market.predict(data)
 
+    return jsonify(list(preds))
 
 
 @app.route("/predict_streamlit", methods=['POST'])
 def predict_streamlit():
-    """Receives car metadata, feeds into trained model, returns prediction as JSON
-    Receives data (JSON) in the following structure:
-    key : value
-    Returns
-    ----------
-    preds
-        estimated sale value on CarsAndBids.com and the standard deviation
-    """
+
     data = request.get_data()
     data = data.decode('UTF-8')
     data = json.loads(data)
-    data = data['rows'][0]
+    cols = list(data.keys())
     model_name = data['tree_model']
     del data['tree_model']
-    data = pd.DataFrame(data, index = [0])
-    pipe = pkl.loads(s3.Bucket("carsalesmodel").Object(f'{model_name}').get()['Body'].read())
+    data = pd.DataFrame({k: [v] for k, v in data.items()})
+    if 'market_value_mean' in cols:
+        pipe = pkl.loads(s3.Bucket("collectorcarsalesmodel").Object(f'{model_name}_with_market.pkl').get()['Body'].read()).best_estimator_
+        shap_exp = pkl.loads(s3.Bucket("car-shap-explainers").Object(f'{model_name}_with_market.pkl').get()['Body'].read())
+    else:
+        pipe = pkl.loads(s3.Bucket("collectorcarsalesmodel").Object(f'{model_name}_without_market.pkl').get()['Body'].read()).best_estimator_
+        shap_exp = pkl.loads(s3.Bucket("car-shap-explainers").Object(f'{model_name}_without_market.pkl').get()['Body'].read())
     transformer = pipe['columntransformer']
     feature_names = get_column_names_from_ColumnTransformer(transformer)
     feature_names.append('model')
     feature_names.append('engine')
     shap_data_prediction = transformer.transform(data).toarray()
-    shap_exp = pkl.loads(s3.Bucket("shap-explainers").Object(f'{model_name}').get()['Body'].read())
-    shap_exp =  shap_exp.shap_values(shap_data_prediction)
+    shap_exp = shap_exp.shap_values(shap_data_prediction)
     shap_exp = shap_exp[0]
     feature_dict = {}
     feature_map = {"Make":'x0', "Reserve":'x1', "Body Style":'x2', "Drivetrain":'x3', "Title": 'x4', "Transmission": 'x5'}

@@ -1,4 +1,5 @@
-name: Deploy docker image for server
+
+name: Deploy docker image for Streamlit server
 
 on:
   push:
@@ -6,7 +7,7 @@ on:
 
 defaults:
   run:
-    working-directory: server
+    working-directory: public
 
 jobs:
   
@@ -34,8 +35,8 @@ jobs:
     - name: Build, tag, and push image to Amazon ECR
       env:
         ECR_REGISTRY: ${{ secrets.ECR_REPO_URI }}
-        ECR_REPOSITORY: classical_project_docker
-        IMAGE_TAG: server_latest
+        ECR_REPOSITORY: servers
+        IMAGE_TAG: streamlit_latest
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
