@@ -210,5 +210,3 @@ if selected_navbar == "API":
        
 st.markdown('<a href="https://github.com/AdamLang96/CarSalesModel" target=_top>Developed by Adam Lang [Github Repo]</a>', unsafe_allow_html=True)
 st.write("Contact me at adamglang96@gmail.com")
-
-
