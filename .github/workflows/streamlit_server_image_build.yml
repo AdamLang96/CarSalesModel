@@ -35,8 +35,8 @@ jobs:
     - name: Build, tag, and push image to Amazon ECR
       env:
         ECR_REGISTRY: ${{ secrets.ECR_REPO_URI }}
-        ECR_REPOSITORY: servers
-        IMAGE_TAG: streamlit_latest
+        ECR_REPOSITORY: streamlit
+        IMAGE_TAG: latest
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
