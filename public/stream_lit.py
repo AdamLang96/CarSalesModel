@@ -208,5 +208,5 @@ if selected_navbar == "API":
     st.subheader('Ex:')
     st.text('''curl -d '{"make": "Porsche","model": "Cayenne","mileage": "167500.0",""title_status": "Clean" , "engine":"3.6L V6","drivetrain": "4WD/AWD","transmission" :"Manual (6-Speed)","body_style":" SUV/Crossover", "y_n_reserve":"No Reserve","year":"2012.0", "vin": "5YJSA1DP4CFF00027"}' -X POST http://collectorcarpricing.com:8080/predict''')
        
-st.markdown('<a href="https://github.com/CodeSmithDSMLProjects/CarSalesModel" target=_top>Developed by Adam Lang and David Kim [Github Repo]</a>', unsafe_allow_html=True)
-st.write("Contact us at adamglang96@gmail.com and koyykdy@gmail.com")
+st.markdown('<a href="https://github.com/AdamLang96/CarSalesModel" target=_top>Developed by Adam Lang [Github Repo]</a>', unsafe_allow_html=True)
+st.write("Contact me at adamglang96@gmail.com")
