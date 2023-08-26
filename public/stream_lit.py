@@ -98,7 +98,7 @@ if selected_navbar == "FAQ":
 
 if selected_navbar == "Predict":
     with st.container():
-        st.text('CarsAndBids.com is a new auction website for collector cars from the 80s until now. With a rich history of auctions, we wanted to learn if we could predict\nwhich cars would be good deals on the site by using features of the vehicle like Make, Model, Year, Engine (etc.) as well as car market data on the vehicle\nand general market data, we fit a gradient boosted decision tree to predict the selling price of the car. To determine whether its a good deal, we compare the\npredicted sale price against the market average for similar vehicles. Car market data comes from the VinAudit API\n')
+        st.text('CarsAndBids.com is a new auction website for collector cars from the 80s until now. With a rich history of auctions, we wanted to learn if we could predict\nwhich cars would be good deals on the site by using features of the vehicle like Make, Model, Year, Engine (etc.) as well as car market data on the vehicle\nand general market data, we fit a gradient boosted decision tree to predict the selling price of the car. Car market data comes from VinAudit.com API\n')
         form = st.form(key='uinput')
     with form:
         form_columns = st.columns(4)
@@ -188,7 +188,7 @@ if selected_navbar == "Predict":
 
 api_column1, api_column2, api_column3 = st.columns(3)          
 if selected_navbar == "API":
-    st.subheader("Our API is free to use and available via a POST request to http://collectorcarpricing.com:8080/predict")
+    st.subheader("Our API is free to use and available via a POST request to http://api.carcollectorpricing.com/predict")
     st.write('The post request must include the following parameters:')
     api_data = { "Name": ['make', 'model', 'mileage', 'status', 'engine', 'body_style', 'y_n_reserve','year', 'drivetrain', 'transmission', 'vin'],
                  "Required": ['yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes','yes', 'yes', 'yes', 'no'],
@@ -206,7 +206,7 @@ if selected_navbar == "API":
                                     "Any valid VIN number"]}
     st.table(pd.DataFrame(api_data))
     st.subheader('Ex:')
-    st.text('''curl -d '{"make": "Porsche","model": "Cayenne","mileage": "167500.0",""title_status": "Clean" , "engine":"3.6L V6","drivetrain": "4WD/AWD","transmission" :"Manual (6-Speed)","body_style":" SUV/Crossover", "y_n_reserve":"No Reserve","year":"2012.0", "vin": "5YJSA1DP4CFF00027"}' -X POST http://collectorcarpricing.com:8080/predict''')
+    st.text('''curl -d '{"make": "Acura","model": "Cayenne","mileage": "500.0","title_status": "Clean" , "engine":"3.6L V6","drivetrain": "4WD/AWD","transmission" :"Automatic","body_style":" SUV/Crossover", "y_n_reserve":" No Reserve","year":"2022.0"}' -X POST  http://api.carcollectorpricing.com/predict''')
        
 st.markdown('<a href="https://github.com/AdamLang96/CarSalesModel" target=_top>Developed by Adam Lang [Github Repo]</a>', unsafe_allow_html=True)
 st.write("Contact me at adamglang96@gmail.com")
