@@ -22,15 +22,15 @@
 <br />
 <div align="center">
   <h1 align="center"> <a href=http://CarCollectorPricing.com> CarCollectorPricing.com </h1>
-  <h2 align="center">
+  <p align="center">
     Get the best price for your collector vehicle!
-  </h2>
+  </p>
 </div>
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-<img src="cars.gif" alt="Logo" width="1250" height="600">
+<img src="readme_assets/cars.gif" alt="Logo" width="1250" height="600">
 
 This GitHub repository serves as the home for [CarCollectorPricing.com](http://CarCollectorPricing.com). The primary goal of this project is to gather comprehensive data [CarsandBids.com](https://carsandbids.com/) and utilize this data to train a predictive model that can estimate car sales prices. Whether you're a car enthusiast, a data scientist, or simply interested in predictive modeling, this project offers valuable insights into the world of automotive auctions and machine learning.
 
@@ -41,7 +41,7 @@ Car auctions are a crucial marketplace for both buyers and sellers in the automo
 <!-- GETTING STARTED -->
 ## Automation
 
-![](AWSDiagram.png)
+![](readme_assets/AWSDiagram.pngAWSDiagram.png)
 
 
 CI/CD and automation were utilized heavily throughout this project. View the diagram above to see the specific implementation
