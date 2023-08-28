@@ -41,7 +41,7 @@ Car auctions are a crucial marketplace for both buyers and sellers in the automo
 <!-- GETTING STARTED -->
 ## Automation
 
-![](readme_assets/AWSDiagram.pngAWSDiagram.png)
+![](readme_assets/AWSDiagram.png)
 
 
 CI/CD and automation were utilized heavily throughout this project. View the diagram above to see the specific implementation
