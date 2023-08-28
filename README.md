@@ -18,7 +18,6 @@
 -->
 [![MIT License][license-shield]][license-url] [![LinkedIn][linkedin-shield]][linkedin-url]
 
-
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
@@ -29,11 +28,10 @@
   </h2>
 </div>
 
-
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-<img src="cars.gif" alt="Logo" width="500" height="500">
+<img src="cars.gif" alt="Logo" width="1250" height="600">
 
 This GitHub repository serves as the home for [CarCollectorPricing.com](http://CarCollectorPricing.com). The primary goal of this project is to gather comprehensive data [CarsandBids.com](https://carsandbids.com/) and utilize this data to train a predictive model that can estimate car sales prices. Whether you're a car enthusiast, a data scientist, or simply interested in predictive modeling, this project offers valuable insights into the world of automotive auctions and machine learning.
 
@@ -44,9 +42,10 @@ Car auctions are a crucial marketplace for both buyers and sellers in the automo
 <!-- GETTING STARTED -->
 ## Automation
 
-[](AWS Diagram.png)
+![](AWSDiagram.png)
 
 
+CI/CD and automation were utilized heavily throughout this project. View the diagram above to see the specific implementation
 
 <!-- CONTRIBUTING -->
 ## Contributing
@@ -64,16 +63,12 @@ Don't forget to give the project a star! Thanks again!
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
 <!-- LICENSE -->
 ## License
 
 Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 <!-- CONTACT -->
 ## Contact
@@ -87,13 +82,10 @@ Adam Lang
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
-
-
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://www.linkedin.com/in/adam-lang96/
 [license-shield]: https://img.shields.io/github/license/othneildrew/Best-README-Template.svg?style=for-the-badge
 [license-url]: https://github.com/othneildrew/Best-README-Template/blob/master/LICENSE.txt
-[next-url]: https://nextjs.org/
 
