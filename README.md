@@ -29,20 +29,11 @@
     <img src="Screenshot 2023-08-28 at 12.02.17 PM.png" alt="Logo" width="1250" height="600">
   </a>
 
-  <h3 align="center">Best-README-Template</h3>
+  <h1 align="center">carcollectorpricing.com</h1>
 
-  <p align="center">
-    An awesome README template to jumpstart your projects!
-    <br />
-    <a href="https://github.com/othneildrew/Best-README-Template"><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
-    <a href="https://github.com/othneildrew/Best-README-Template">View Demo</a>
-    ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues">Report Bug</a>
-    ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues">Request Feature</a>
-  </p>
+  <h3 align="center">
+    Get the best price for your collector vehicle!
+  </h3>
 </div>
 
 
