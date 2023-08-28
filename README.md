@@ -26,7 +26,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/othneildrew/Best-README-Template">
-    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTe1SBdlXWtJ96-zcUnN05YMaumzpJ-q2ei-A&usqp=CAU" alt="Logo" width="700" height="400">
+    <img src="ezgif.com-video-to-gif.gif" alt="Logo" width="700" height="400">
   </a>
 
   <h3 align="center">Best-README-Template</h3>
