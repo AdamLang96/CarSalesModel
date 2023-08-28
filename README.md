@@ -21,7 +21,6 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-    <img src="Screenshot 2023-08-28 at 12.02.17 PM.png" alt="Logo" width="1250" height="600">
   <h1 align="center"> <a href=http://CarCollectorPricing.com> CarCollectorPricing.com </h1>
   <h2 align="center">
     Get the best price for your collector vehicle!
