@@ -29,7 +29,7 @@
     <img src="Screenshot 2023-08-28 at 12.02.17 PM.png" alt="Logo" width="1250" height="600">
   </a>
 
-  <h1 align="center">carcollectorpricing.com</h1>
+  <h1 align="center"> <a href=CarCollectorPricing.com> CarCollectorPricing.com </h1>
 
   <h3 align="center">
     Get the best price for your collector vehicle!
@@ -69,7 +69,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
+<img src="cars.gif" alt="Logo" width="800" height="500">
 
 There are many great README templates available on GitHub; however, I didn't find one that really suited my needs so I created this enhanced one. I want to create a README template so amazing that it'll be the last one you ever need -- I think this is it.
 
