@@ -44,7 +44,7 @@ Car auctions are a crucial marketplace for both buyers and sellers in the automo
 <!-- GETTING STARTED -->
 ## Automation
 
-<img src="AWS Automation.png" alt="Logo" width="800" height="500">
+<img src="AWS Diagram.png" alt="Logo" width="800" height="500">
 
 
 
