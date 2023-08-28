@@ -33,7 +33,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-<img src="cars.gif" alt="Logo" width="800" height="500">
+<img src="cars.gif" alt="Logo" width="500" height="500">
 
 This GitHub repository serves as the home for [CarCollectorPricing.com](http://CarCollectorPricing.com). The primary goal of this project is to gather comprehensive data [CarsandBids.com](https://carsandbids.com/) and utilize this data to train a predictive model that can estimate car sales prices. Whether you're a car enthusiast, a data scientist, or simply interested in predictive modeling, this project offers valuable insights into the world of automotive auctions and machine learning.
 
@@ -44,7 +44,7 @@ Car auctions are a crucial marketplace for both buyers and sellers in the automo
 <!-- GETTING STARTED -->
 ## Automation
 
-<img src="AWS Diagram.png" alt="Logo" width="800" height="500">
+[](AWS Diagram.png)
 
 
 
