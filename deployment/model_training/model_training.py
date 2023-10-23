@@ -14,6 +14,8 @@ import shap
 import numpy as np
 import pandas as pd
 import yaml
+from sklearn.ensemble import GradientBoostingClassifier
+
 
 session = boto3.Session(
     aws_access_key_id      = os.environ["ACCESS_KEY"],
