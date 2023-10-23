@@ -14,7 +14,6 @@ import shap
 import numpy as np
 import pandas as pd
 import yaml
-from sklearn.ensemble import GradientBoostingClassifier
 
 
 session = boto3.Session(
