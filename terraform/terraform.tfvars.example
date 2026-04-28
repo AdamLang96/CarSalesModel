@@ -1,0 +1,13 @@
+aws_region         = "us-west-2"
+project_name       = "car-sales-model"
+environment        = "prod"
+vpc_cidr           = "10.0.0.0/16"
+db_instance_class  = "db.t3.micro"
+db_allocated_storage = 20
+db_name            = "carsales"
+db_username        = "admin"
+db_password        = "your-secure-password-here"
+aws_access_key     = "your-access-key"
+aws_secret_key     = "your-secret-key"
+fargate_cpu        = 256
+fargate_memory     = 512

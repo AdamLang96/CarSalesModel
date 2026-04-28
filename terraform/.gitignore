@@ -1,0 +1,24 @@
+# Local .terraform directories
+**/.terraform/*
+
+# .terraform.lock.hcl files
+.terraform.lock.hcl
+
+# terraform.tfstate files
+terraform.tfstate
+terraform.tfstate.backup
+
+# tfvars files with secrets
+*.tfvars
+!terraform.tfvars.example
+
+# Provider plugin cache
+.plugin-lock-cache
+
+# IDE files
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
